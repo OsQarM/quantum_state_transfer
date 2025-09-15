@@ -10,13 +10,14 @@ def time_evolution(Ham, initial_state, initial_time, final_time, timesteps):
     :initial_time, final_time:(float) self-explanatory
     :timesteps:(float) number of simulation steps between the two times 
     '''
+    hamiltonian_object = Ham.ham
     times = np.linspace(initial_time, final_time, timesteps)
     #apply hamiltonian to initial state and don't track any observables
     options = {
     'method': 'adams', 
     'progress_bar': 'tqdm'
     }
-    simulation_results = qt.sesolve(Ham, initial_state, times, options = options)
+    simulation_results = qt.sesolve(hamiltonian_object, initial_state, times, options = options)
 
     return simulation_results
 
@@ -37,7 +38,7 @@ def calculate_full_fidelity(state_evolution, target_state):
     return fidelity
 
 
-def calculate_z_expectation_values(n_spins, state_evolution, sigma_z_list):    
+def calculate_z_expectation_values(state_evolution, sigma_z_list):    
     #Find minimum difference between expected Z val of last spin and initial Z of first spin
     #calculate expectation value of sz for each spin
     magn_t = np.array([[qt.expect(op, state) 

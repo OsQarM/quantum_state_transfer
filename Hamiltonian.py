@@ -33,7 +33,7 @@ class Hamiltonian:
     '''Hamiltonian object. It is first initialized, then chosen the type 
         (standard,forward, backward)    
     '''
-    def __init__(self, system_size, mode, lambda_factor, register_size, global_J=None):
+    def __init__(self, system_size, mode, lambda_factor, register_size=None, global_J=None):
         '''
         Parameter description
         
@@ -80,13 +80,13 @@ class Hamiltonian:
         if self.mode == "standard":
             couplings = standard_J(self.n_spins, self.lambda_factor)
             H = self.hamiltonian_standard(couplings)
-        else:
+        elif self.mode == "forward":
             couplings = domain_wall_J(self.n_spins, self.lambda_factor)
             tn = tn_definition(couplings)
-            
-            if self.mode == "forward":
-                H = self.hamiltonian_forward(tn)
-            elif self.mode == "backward":
+            H = self.hamiltonian_forward(tn)
+        elif self.mode == "backward":
+                couplings = domain_wall_J(self.n_spins - self.register_size, self.lambda_factor)
+                tn = tn_definition(couplings)
                 H = self.hamiltonian_backward(tn)
 
         return H
