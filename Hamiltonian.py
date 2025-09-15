@@ -81,13 +81,13 @@ class Hamiltonian:
             couplings = standard_J(self.n_spins, self.lambda_factor)
             H = self.hamiltonian_standard(couplings)
         elif self.mode == "forward":
-            couplings = domain_wall_J(self.n_spins, self.lambda_factor)
+            couplings = domain_wall_J(self.n_spins-1, self.lambda_factor)
             tn = tn_definition(couplings)
             H = self.hamiltonian_forward(tn)
         elif self.mode == "backward":
-                couplings = domain_wall_J(self.n_spins - self.register_size, self.lambda_factor)
-                tn = tn_definition(couplings)
-                H = self.hamiltonian_backward(tn)
+            couplings = domain_wall_J(self.n_spins - self.register_size, self.lambda_factor)
+            tn = tn_definition(couplings)
+            H = self.hamiltonian_backward(tn)
 
         return H
     
