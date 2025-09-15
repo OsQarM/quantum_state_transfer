@@ -53,15 +53,15 @@ class Hamiltonian:
         self.ham = self._build_hamiltonian()
 
     
-    def _initialize_operators(self, n_spins):
+    def _initialize_operators(self):
         '''Setup operators for individual qubits
            for each value of i it puts the paulis in different positions of the list, 
            then does IxIxI...sigma_ixIxI...xI
         '''
         sx_list, sy_list, sz_list = [], [], []
-        for i in range(n_spins):
+        for i in range(self.n_spins):
             #list of 2x2 identity matrices
-            op_list = [qt.qeye(2)] * n_spins
+            op_list = [qt.qeye(2)] * self.n_spins
             #replace i-th element with sigma_x
             op_list[i] = sx
             #create matrices of 2^Nx2^N
@@ -87,7 +87,7 @@ class Hamiltonian:
             if self.mode == "forward":
                 H = self.hamiltonian_forward(tn)
             elif self.mode == "backward":
-                H = self.hamiltonian_backward()
+                H = self.hamiltonian_backward(tn)
 
         return H
     
