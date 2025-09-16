@@ -13,7 +13,7 @@ def save_numpy_array(fidelity_data, filepath):
     :fidelity_data:(nparray(float)) Data to save
     :filepath:(str) Path to save
     '''
-    np.save(filepath, fidelity_data)
+    np.save(f"{filepath}.npy", fidelity_data)
     return
 
 
@@ -27,7 +27,7 @@ def fetch_numpy_array(filepath):
     Returns:
         loaded_array: data from the path as numpy array
     '''
-    loaded_array = np.load(filepath)
+    loaded_array = np.load(f"{filepath}.npy")
     return loaded_array
 
 
@@ -36,8 +36,7 @@ def create_data_filename(N: int,
                         J: str, 
                         L: float, 
                         data_dict: Dict[str, Any],
-                        base_name: str = "data",
-                        extension: str = "json") -> str:
+                        base_name: str = "data") -> str:
     """
     Create a filename with variables N, J, L, dictionary content, and timestamp.
     
@@ -76,7 +75,7 @@ def create_data_filename(N: int,
     L_str = f"{L:.3f}"  # Format float to 3 decimal places
     
     # Create filename
-    filename = f"{base_name}_N{N_str}_J{J}_L{L_str}_{dict_str}_{timestamp}.{extension}"
+    filename = f"{base_name}_N{N_str}_J{J}_L{L_str}_{dict_str}_{timestamp}"
     
     return filename
 
