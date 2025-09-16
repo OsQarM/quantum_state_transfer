@@ -18,12 +18,17 @@ def save_numpy_array(fidelity_data, filepath):
 
 
 def fetch_numpy_array(filepath):
-    pass
+    '''
+    Retrieves previously stored data
 
-def fetch_z_expectation_curves(filepath):
-    pass
-
-
+    Args:
+        filepath: String value
+    
+    Returns:
+        loaded_array: data from the path as numpy array
+    '''
+    loaded_array = np.load(filepath)
+    return loaded_array
 
 
 
