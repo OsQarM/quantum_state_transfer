@@ -5,48 +5,27 @@ import model_building as md
 import data_handling as dh
 
 
-def TwoStepAlgorithm(N, lmd, J, initial_state_dict, ti, tf, Nstep):
+def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, tf, Nstep):
     """
     
     Runs the 2-step protocol to achieve quantum transport with domain walls
 
     Args:
-        N: Integer size of system (chain length in qubits)
-        lmd: Float prefactor of the Hamiltonian
-        J: Float domain wall coupling
-        initial_state_dict: Dictionary containing states and weights
+        initial_chain: qutip product state of the initial configuration
+        final chain: qutip product state of the target state
+        H_transport: Hamiltonian class object with the dynamics of the first step
+        H_reset: Hamiltonian class object with the dynamics of the second step
         ti: Float initial simulation time
         tf: Float final simulation time
         Nsteps: Integer number of timesteps
 
     Returns:
+        total_full_fidelity: Array of fidelities between simulated states and target state
+        magnetizations: Array of expectation values of sigma_z for each spin at each timestep
 
     """
 
     # Create DW registers and whole systems for initial and target state
-    initial_state = md.crate_domain_wall_state(initial_state_dict, register='Alice')
-    final_state   = md.crate_domain_wall_state(initial_state_dict, register='Bob')
-
-    initial_chain = md.initialize_general_system(N, initial_state, register='Alice')
-    final_chain   = md.initialize_general_system(N, final_state, register='Bob')
-
-    #Create Hamiltonians for the 2 separate steps
-    register_size = len(initial_state.dims[0])
-
-    H_transport = Ham.Hamiltonian(system_size = N,
-                         mode = "forward",
-                         lambda_factor = lmd,
-                         global_J = J
-                         )
-
-    H_reset     = Ham.Hamiltonian(system_size = N,
-                         mode = "backward",
-                         lambda_factor = lmd,
-                         register_size = register_size,
-                         global_J = J
-                         )
-    
-
     result_transport         = time_evolution                (H_transport, initial_chain, ti, tf, Nstep)
     full_fidelity_transport  = calculate_full_fidelity       (result_transport, final_chain)
     magnetizations_transport = calculate_z_expectation_values(result_transport, H_transport.sz_list)
@@ -58,13 +37,6 @@ def TwoStepAlgorithm(N, lmd, J, initial_state_dict, ti, tf, Nstep):
 
     total_full_fidelity = np.concatenate((full_fidelity_transport, full_fidelity_reset), axis=0)
     magnetizations      = np.concatenate((magnetizations_transport, magnetizations_reset), axis=0)
-
-    # data storage test
-    f_filename = dh.create_data_filename(N, J, lmd, initial_state_dict, base_name="fidelity", extension = "npy")
-    z_filename = dh.create_data_filename(N, J, lmd, initial_state_dict, base_name="z_expectation", extension = "npy")
-
-    dh.save_numpy_array(total_full_fidelity, f'data_files/fidelity/{f_filename}')
-    dh.save_numpy_array(magnetizations, f'data_files/z_expectation/{z_filename}')
 
     return total_full_fidelity, magnetizations
 
