@@ -5,7 +5,7 @@ import model_building as md
 import data_handling as dh
 
 
-def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, tf, Nstep):
+def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, tf, Nstep, AutoSwitch = False):
     """
     
     Runs the 2-step protocol to achieve quantum transport with domain walls
@@ -26,12 +26,24 @@ def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, tf, N
     """
 
     # Create DW registers and whole systems for initial and target state
-    result_transport         = time_evolution                (H_transport, initial_chain, ti, tf, Nstep)
+    result_calibration         = time_evolution                (H_transport, initial_chain, ti, tf, Nstep)
+    full_fidelity_calibration  = calculate_full_fidelity       (result_calibration, final_chain)
+    magnetizations_calibration = calculate_z_expectation_values(result_calibration, H_transport.sz_list)
+
+    if AutoSwitch == False:
+        step_of_min_z = 460
+    elif AutoSwitch == True:
+        step_of_min_z = max(int(np.argmin(magnetizations_calibration[:,-1])),10)
+
+    period = (tf - ti)*step_of_min_z/Nstep
+
+    result_transport         = time_evolution                (H_transport, initial_chain, ti, period, int(step_of_min_z))
     full_fidelity_transport  = calculate_full_fidelity       (result_transport, final_chain)
     magnetizations_transport = calculate_z_expectation_values(result_transport, H_transport.sz_list)
 
     middle_chain = result_transport.states[-1]
-    result_reset         = time_evolution                (H_reset, middle_chain, ti, tf*1.12, int(Nstep*1.12)) #Additional time for validation and aesthetics
+
+    result_reset         = time_evolution                (H_reset, middle_chain, ti, period*1.12, int(step_of_min_z*1.12)) #Additional time for validation and aesthetics
     full_fidelity_reset  = calculate_full_fidelity       (result_reset, final_chain)
     magnetizations_reset = calculate_z_expectation_values(result_reset, H_reset.sz_list)
 
