@@ -6,6 +6,7 @@ import numpy as np
 from typing import Dict, Any, Union
 import datetime
 import re
+import csv
 
 def save_numpy_array(fidelity_data, filepath):
     '''
@@ -29,6 +30,65 @@ def fetch_numpy_array(filepath):
     '''
     loaded_array = np.load(f"{filepath}.npy")
     return loaded_array
+
+
+def read_plot_data_from_csv(filepath):
+    """Reads x and y data from a CSV file into two separate lists.
+    
+    Args:
+        filename (str): Path to the CSV file
+        
+    Returns:
+        tuple: (x_data, y_data) as two lists
+    """
+    x_data = []
+    y_data = []
+    
+    with open(filepath, 'r') as csvfile:
+        csv_reader = csv.reader(csvfile)
+        next(csv_reader)  # Skip the header row
+        for row in csv_reader:
+            if len(row) >= 2:  # Ensure there are at least two columns
+                x_data.append(float(row[0]))
+                y_data.append(float(row[1]))
+    
+    return x_data, y_data
+
+
+def save_plot_data_to_csv(x_data, y_data, filepath, headers=None):
+    """
+    Saves two lists/arrays to a CSV file for plotting.
+    
+    Args:
+        x_data (list/array): X-axis values (e.g., time steps)
+        y_data (list/array): Y-axis values (e.g., fidelity)
+        filename (str): Output CSV filename
+        headers (list): Column headers (e.g., ["Time", "Fidelity"])
+    """
+    # Ensure inputs are numpy arrays
+    x_data = np.array(x_data)
+    y_data = np.array(y_data)
+    
+    # Verify equal lengths
+    if len(x_data) != len(y_data):
+        raise ValueError("x_data and y_data must have the same length")
+    
+    # Default headers
+    if headers is None:
+        headers = ["Time_step", "Fidelity"]
+    
+    # Write to CSV
+    with open(f'{filepath}.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(headers)  # Write header
+        writer.writerows(zip(x_data, y_data))  # Write data rows
+    
+    print(f"Data saved to {filepath}")
+    print(f"First 5 rows:\n{headers[0]}\t{headers[1]}")
+    for x, y in zip(x_data[:5], y_data[:5]):
+        print(f"{x:.4f}\t{y:.4f}")
+    
+    return
 
 
 
