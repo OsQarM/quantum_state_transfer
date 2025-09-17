@@ -51,8 +51,11 @@ def read_plot_data_from_csv(filepath):
             if len(row) >= 2:  # Ensure there are at least two columns
                 x_data.append(float(row[0]))
                 y_data.append(float(row[1]))
+
+    filename = os.path.basename(filepath)  # Get just the filename with extension
+    filename_without_ext = os.path.splitext(filename)[0]  # Remove the extension
     
-    return x_data, y_data
+    return x_data, y_data, filename_without_ext
 
 
 def save_plot_data_to_csv(x_data, y_data, filepath, headers=None):

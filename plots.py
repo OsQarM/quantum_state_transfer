@@ -26,6 +26,9 @@ def plot_test_fidelity(fidelity_data, N, filepath):
     plt.show()
     return
 
+#########################
+#########################
+
 
 def plot_test_z_expectations(z_data, N, filepath):
     # Create simplified figure with only line plot
@@ -81,3 +84,84 @@ def plot_test_z_expectations(z_data, N, filepath):
     plt.savefig(f'{filepath}.pdf', bbox_inches='tight', dpi=300)
 
     plt.show()
+    return
+
+
+#########################
+#########################
+
+
+
+def plot_ratios_trend_slope(x_data, y_data, log_scale=True, show_trend=True, filepath = '../'):
+    """Create publication-quality plot of error ratios with trend line."""
+    plt.figure(figsize=(8, 6), dpi=300)  # High resolution for thesis
+    
+    # Create a figure with constrained layout
+    fig, ax = plt.subplots(figsize=(8, 6), constrained_layout=True)
+    
+    # Plot original data with improved marker styling
+    ax.plot(x_data, y_data, 'b-', linewidth=2, marker='o', markersize=6, 
+            markeredgecolor='k', markeredgewidth=0.5, label='Simulated data')
+    
+    # Calculate and plot trend line if requested
+    if show_trend:
+        # Linear regression using numpy
+        coeffs = np.polyfit(x_data, y_data, 1)
+        slope = coeffs[0]
+        intercept = coeffs[1]
+        trend_line = np.poly1d(coeffs)
+        y_trend = trend_line(x_data)
+        
+        # Plot trend line with improved styling
+        ax.plot(x_data, y_trend, 'r--', linewidth=1.5, 
+                label=f'Linear fit (α = {slope:.3f})')
+
+    # --- Professional Styling ---
+    # Font styling (Times New Roman-like)
+    plt.rcParams['font.family'] = 'serif'
+    plt.rcParams['mathtext.fontset'] = 'dejavuserif'
+    
+    # Axis labels with requested font sizes
+    ax.set_xlabel(r'$log(J/\lambda)$', fontsize=15, labelpad=10)
+    ax.set_ylabel('$\log(1 - F)$', fontsize=15, labelpad=10)
+    
+    # Title with requested font size
+    ax.set_title('Error vs. Ratio $J/\lambda$', fontsize=16, pad=12)
+    
+    # Scientific notation for y-axis if log scale
+    if log_scale:
+        ax.set_yscale('log')
+        # Format log scale ticks properly
+        from matplotlib.ticker import LogFormatter
+        ax.yaxis.set_major_formatter(LogFormatter(labelOnlyBase=False))
+    
+    # Tick parameters
+    ax.tick_params(axis='both', which='major', labelsize=14)
+    ax.tick_params(axis='both', which='minor', labelsize=12)
+    
+    # Grid styling
+    ax.grid(True, which='both', linestyle=':', linewidth=0.7, alpha=0.5)
+    
+    # Spine styling - remove top/right, adjust others
+    for spine in ['top', 'right']:
+        ax.spines[spine].set_visible(False)
+    for spine in ['bottom', 'left']:
+        ax.spines[spine].set_linewidth(0.8)
+        ax.spines[spine].set_color('black')
+    #legend with professional styling
+    if show_trend:
+        legend = ax.legend(fontsize=12, frameon=True, 
+                          framealpha=1, edgecolor='k',
+                          loc='upper left' if log_scale else 'best')
+        legend.get_frame().set_linewidth(0.8)
+    
+    # Save figure if path provided
+    plt.savefig(f'{filepath}.png', bbox_inches='tight', dpi=300)
+    plt.savefig(f'{filepath}.pdf', bbox_inches='tight', dpi=300)
+    
+    
+    plt.show()
+    return
+
+
+    
