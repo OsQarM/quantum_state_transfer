@@ -3,7 +3,7 @@ from matplotlib.ticker import LogFormatter
 from IPython.display import Image
 import numpy as np
 
-def plot_test_fidelity(fidelity_data, N, filepath):
+def plot_test_fidelity(fidelity_data, N, filepath=None):
     plt.figure(figsize=(8, 6), dpi=300)
     # Plot each curve
     num_steps = len(fidelity_data)
@@ -20,8 +20,9 @@ def plot_test_fidelity(fidelity_data, N, filepath):
 
     plt.tight_layout()
 
-    plt.savefig(f'{filepath}.png', bbox_inches='tight', dpi=300)
-    plt.savefig(f'{filepath}.pdf', bbox_inches='tight', dpi=300)
+    if filepath:
+        plt.savefig(f'{filepath}.png', bbox_inches='tight', dpi=300)
+        plt.savefig(f'{filepath}.pdf', bbox_inches='tight', dpi=300)
 
     # Adjust layout and display
     plt.show()
@@ -31,7 +32,7 @@ def plot_test_fidelity(fidelity_data, N, filepath):
 #########################
 
 
-def plot_test_z_expectations(z_data, N, filepath):
+def plot_test_z_expectations(z_data, N, filepath=None):
     # Create simplified figure with only line plot
     fig = plt.figure(figsize=(8, 6), dpi=300)
 
@@ -81,8 +82,9 @@ def plot_test_z_expectations(z_data, N, filepath):
     # Final layout adjustment
     plt.tight_layout()
 
-    plt.savefig(f'{filepath}.png', bbox_inches='tight', dpi=300)
-    plt.savefig(f'{filepath}.pdf', bbox_inches='tight', dpi=300)
+    if filepath:
+        plt.savefig(f'{filepath}.png', bbox_inches='tight', dpi=300)
+        plt.savefig(f'{filepath}.pdf', bbox_inches='tight', dpi=300)
 
     plt.show()
     return
@@ -261,4 +263,103 @@ def plot_multiple_ratio_trend_slope(x_data, y_data_dict, log_scale=True, show_tr
         plt.savefig(f'{filepath}.pdf', bbox_inches='tight', dpi=300)
     
     plt.show()
+
+    return
     
+
+def plot_multiple_ratio_trend_slope_2(x_data, y_data_dict, log_scale=True, show_trend=True, filepath='../'):
+    """Create publication-quality plot of error ratios with trend lines for multiple curves.
+    
+    Args:
+        x_data (list): X-axis data (same for all curves)
+        y_data_dict (dict): Dictionary where keys are curve names and values are y-data lists
+        log_scale (bool): Whether to use log scale on y-axis
+        show_trend (bool): Whether to calculate and show trend lines
+        filepath (str): Path to save the figure
+    """
+    # Create a figure with constrained layout
+    fig, ax = plt.subplots(figsize=(8, 6), constrained_layout=True)
+    
+    # Use the color palette from the second function (commonly used colors in quantum plots)
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', 
+              '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+    
+    # Store handles and labels for legend
+    legend_handles = []
+    legend_labels = []
+    
+    # Plot each curve
+    for i, (curve_name, y_data) in enumerate(y_data_dict.items()):
+        color = colors[i % len(colors)]  # Cycle through colors if more curves than colors
+        
+        # Plot original data with improved marker styling - store the handle
+        line, = ax.plot(x_data, y_data, '-', linewidth=2, marker='o', markersize=6, 
+                       markeredgecolor='k', markeredgewidth=0.5, color=color)
+        
+        # Calculate and store trend line if requested
+        if show_trend:
+            # Linear regression using numpy
+            coeffs = np.polyfit(x_data, y_data, 1)
+            slope = coeffs[0]
+            intercept = coeffs[1]
+            trend_line = np.poly1d(coeffs)
+            y_trend = trend_line(x_data)
+            
+            # Plot trend line with matching color but dashed
+            ax.plot(x_data, y_trend, '--', linewidth=1.5, color=color, alpha=0.8)
+            
+            # Use the actual data line handle for legend, but with slope in label
+            legend_handles.append(line)
+            legend_labels.append(f'{curve_name} (α = {slope:.3f})')
+        else:
+            # If no trend lines, just use curve name
+            legend_handles.append(line)
+            legend_labels.append(curve_name)
+
+    # --- Professional Styling ---
+    # Font styling (Times New Roman-like)
+    plt.rcParams['font.family'] = 'serif'
+    plt.rcParams['mathtext.fontset'] = 'dejavuserif'
+    
+    # Axis labels with requested font sizes
+    ax.set_xlabel(r'$log(J/\lambda)$', fontsize=15, labelpad=10)
+    ax.set_ylabel('$\log(1 - F)$', fontsize=15, labelpad=10)
+    
+    # Title with requested font size
+    ax.set_title('Error vs. Ratio $J/\lambda$', fontsize=16, pad=12)
+    
+    # Scientific notation for y-axis if log scale
+    if log_scale:
+        ax.set_yscale('log')
+        # Format log scale ticks properly
+        ax.yaxis.set_major_formatter(LogFormatter(labelOnlyBase=False))
+    
+    # Tick parameters
+    ax.tick_params(axis='both', which='major', labelsize=14)
+    ax.tick_params(axis='both', which='minor', labelsize=12)
+    
+    # Grid styling
+    ax.grid(True, which='both', linestyle=':', linewidth=0.7, alpha=0.5)
+    
+    # Spine styling - remove top/right, adjust others
+    for spine in ['top', 'right']:
+        ax.spines[spine].set_visible(False)
+    for spine in ['bottom', 'left']:
+        ax.spines[spine].set_linewidth(0.8)
+        ax.spines[spine].set_color('black')
+    
+    # Create legend using the actual line handles
+    if legend_handles:
+        legend = ax.legend(legend_handles, legend_labels, fontsize=12, frameon=True, 
+                          framealpha=1, edgecolor='k',
+                          loc='upper left' if log_scale else 'best')
+        legend.get_frame().set_linewidth(0.8)
+    
+    # Save figure if path provided
+    if filepath:
+        plt.savefig(f'{filepath}.png', bbox_inches='tight', dpi=300)
+        plt.savefig(f'{filepath}.pdf', bbox_inches='tight', dpi=300)
+    
+    plt.show()
+
+    return

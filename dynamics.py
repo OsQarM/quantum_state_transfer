@@ -30,10 +30,11 @@ def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, tf, N
     full_fidelity_calibration  = calculate_full_fidelity       (result_calibration, final_chain)
     magnetizations_calibration = calculate_z_expectation_values(result_calibration, H_transport.sz_list)
 
+    # lazy method. Needs refining
     if AutoSwitch == False:
         step_of_min_z = 460
     elif AutoSwitch == True:
-        step_of_min_z = max(int(np.argmin(magnetizations_calibration[:,-1])),10)
+        step_of_min_z = max(int(np.argmin(magnetizations_calibration[:,-3])),10)
 
     period = (tf - ti)*step_of_min_z/Nstep
 
@@ -52,7 +53,7 @@ def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, tf, N
 
     return total_full_fidelity, magnetizations
 
-def time_evolution(Ham, initial_state, initial_time, final_time, timesteps):
+def time_evolution(Ham, initial_state, initial_time, final_time, timesteps, progessbar = None):
     '''
     Simulation of transport protocol
 
@@ -64,10 +65,14 @@ def time_evolution(Ham, initial_state, initial_time, final_time, timesteps):
     hamiltonian_object = Ham.ham
     times = np.linspace(initial_time, final_time, timesteps)
     #apply hamiltonian to initial state and don't track any observables
-    options = {
-    'method': 'adams', 
-    'progress_bar': 'tqdm'
-    }
+
+    options = {'method': 'adams'}
+
+    if progessbar:
+        options = {
+        'method': 'adams', 
+        'progress_bar': 'tqdm'
+        }
     simulation_results = qt.sesolve(hamiltonian_object, initial_state, times, options = options)
 
     return simulation_results
