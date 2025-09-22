@@ -99,7 +99,8 @@ def create_data_filename(N: int,
                         J: str, 
                         L: float, 
                         data_dict: Dict[str, Any],
-                        base_name: str = "data") -> str:
+                        base_name: str = "data",
+                        extension = None) -> str:
     """
     Create a filename with variables N, J, L, dictionary content, and timestamp.
     
@@ -138,7 +139,10 @@ def create_data_filename(N: int,
     L_str = f"{L:.3f}"  # Format float to 3 decimal places
     
     # Create filename
-    filename = f"{base_name}_N{N_str}_J{J}_L{L_str}_{dict_str}_{timestamp}"
+    if extension:
+        filename = f"{base_name}_N{N_str}_J{J}_L{L_str}_{dict_str}_{timestamp}"
+    else:
+        filename = f"{base_name}_N{N_str}_J{J}_L{L_str}_{dict_str}_{timestamp}_{extension}"
     
     return filename
 
