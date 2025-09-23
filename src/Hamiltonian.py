@@ -40,7 +40,7 @@ class Hamiltonian:
         :system_size:(int) Length of chain
         :mode:(str) Type of Hamiltonian (standard, forward, backward)
         :lambda_factor:(float) Global prefactor that controls error and simulation speed
-        :global_J:(float) Domain wall coupling
+        :global_J:(float) Domain wall coupling (not needed for standard)
         :register_size:(int) Size of Bob's register (needed only for backward case)
         
         '''

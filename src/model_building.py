@@ -1,6 +1,7 @@
 # Numerics
 import qutip as qt
 import numpy as np
+import Hamiltonian as Ham
 
 ket0 = qt.basis(2, 0)
 ket1 = qt.basis(2, 1)
@@ -34,7 +35,7 @@ def initialize_1_qubit_system(size, alpha, beta, register):
 
 ### STATE GENERATION FOR DOMAIN WALLS
 
-def crate_domain_wall_state(state_dictionary, register):
+def create_domain_wall_state(state_dictionary, register):
     '''
     Translates superposition of states into domain wall state of a register (Alice or Bob)
 
@@ -112,6 +113,34 @@ def initialize_general_system(size, dw_state, register):
         initial_state = qt.tensor(chain_state, dw_state) 
      
     return initial_state
+
+
+def initialize_system(state_dictionary, N):
+    initial_state = create_domain_wall_state(state_dictionary, register='Alice')
+    final_state   = create_domain_wall_state(state_dictionary, register='Bob')
+
+    initial_chain = initialize_general_system(N, initial_state, register='Alice')
+    final_chain   = initialize_general_system(N, final_state, register='Bob')
+
+    register_size = len(initial_state.dims[0])
+    
+    return initial_chain, final_chain, register_size
+
+def build_hamiltonians(N, lmd, J, reg_size):
+
+    H_transport = Ham.Hamiltonian(system_size = N,
+                        mode = "forward",
+                        lambda_factor = lmd,
+                        global_J = J
+                        )
+    H_reset     = Ham.Hamiltonian(system_size = N,
+                        mode = "backward",
+                        lambda_factor = lmd,
+                        register_size = reg_size,
+                        global_J = J
+                        )
+    
+    return H_transport, H_reset
 
 
 ### SOON TO BE DEPRECATED

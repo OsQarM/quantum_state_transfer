@@ -4,7 +4,7 @@ import Hamiltonian as Ham
 import model_building as md
 import data_handling as dh
 
-
+#˙
 def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, tf, Nstep, AutoSwitch = False):
     """
     
@@ -55,6 +55,35 @@ def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, tf, N
     magnetizations      = np.concatenate((magnetizations_transport, magnetizations_reset), axis=0)
 
     return total_full_fidelity, magnetizations
+
+
+def OneStepAlgorithm(initial_chain, final_chain, H_transport, ti, tf, Nstep):
+    """
+    
+    Runs the 2-step protocol to achieve quantum transport with domain walls
+
+    Args:
+        initial_chain: qutip product state of the initial configuration
+        final chain: qutip product state of the target state
+        H_transport: Hamiltonian class object with the dynamics of the first step
+        ti: Float initial simulation time
+        tf: Float final simulation time
+        Nsteps: Integer number of timesteps
+
+    Returns:
+        total_full_fidelity: Array of fidelities between simulated states and target state
+        magnetizations: Array of expectation values of sigma_z for each spin at each timestep
+
+    """
+
+    # Create DW registers and whole systems for initial and target state
+    simulation_result = time_evolution                (H_transport, initial_chain, ti, tf, Nstep)
+    full_fidelity     = calculate_full_fidelity       (simulation_result, final_chain)
+    magnetizations    = calculate_z_expectation_values(simulation_result, H_transport.sz_list)
+
+    return full_fidelity, magnetizations
+
+
 
 def time_evolution(Ham, initial_state, initial_time, final_time, timesteps, progessbar = None):
     '''
