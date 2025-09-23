@@ -21,7 +21,6 @@ def initialize_1_qubit_system(size, alpha, beta, register):
     end_spin = alpha*qt.basis(2,0) + beta*qt.basis(2,1)
     norm = np.sqrt(end_spin.dag()*end_spin)
     end_spin = end_spin/norm
-
     #put spin at chosen end depending on register
     if register == "Alice":
         state_list = [end_spin] + [qt.basis(2, 0)] * (size - 1)

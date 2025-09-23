@@ -81,7 +81,7 @@ def OneStepAlgorithm(initial_chain, final_chain, H_transport, ti, tf, Nstep):
     full_fidelity     = calculate_full_fidelity       (simulation_result, final_chain)
     magnetizations    = calculate_z_expectation_values(simulation_result, H_transport.sz_list)
 
-    return full_fidelity, magnetizations
+    return full_fidelity, magnetizations, simulation_result
 
 
 
