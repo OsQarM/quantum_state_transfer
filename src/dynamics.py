@@ -35,6 +35,9 @@ def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, tf, N
         step_of_min_z = 460
     elif AutoSwitch == True:
         step_of_min_z = max(int(np.argmin(magnetizations_calibration[:,-1])),10)
+        #step_of_min_z = max(int(Nstep//2 + np.argmax(magnetizations_calibration[Nstep//2:,-2])),10)
+        #step_of_min_z = np.argsort(np.abs(magnetizations_calibration[:,-1]))[1]
+        
 
     period = (tf - ti)*step_of_min_z/Nstep
 
