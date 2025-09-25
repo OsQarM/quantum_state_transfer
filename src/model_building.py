@@ -83,6 +83,42 @@ def create_domain_wall_state(state_dictionary, register):
     return state/norm
 
 
+
+def create_standard_state(state_dictionary, register):
+    '''
+    Translates superposition of states into domain wall state of a register (Alice or Bob)
+
+    :state_dictionary:(dict) Components of state and weights 
+                             example: |psi> = ["001":0.4,"101":0.2,"111":0.6,"110":0.35]
+    :register:(str) Either "Alice" or "Bob", puts state either at begining or end of chain 
+
+    '''
+    state = 0
+    #loop over states in the dictionary (components)
+    for i, term in enumerate(state_dictionary.keys()):
+        spins = []
+        #Invert order if building state in Alice's register (build starting from last qubit)
+        if register == "Alice":
+            loop_list = term
+        elif register == "Bob":
+            loop_list = term[::-1]
+        #loop over bits
+        for bit in loop_list:
+            #put 0 or 1 to create (or not) domain wall and update previous_spin variable
+            if bit == "1":
+                spins.append(ket1)
+
+            elif bit == "0":
+                spins.append(ket0)
+        #make tensor product
+        st_term = qt.tensor(spins)
+        #add to full state with corresponding weight
+        state += state_dictionary[term]*st_term
+    # normalize
+    norm = np.sqrt(state.dag()*state)
+    return state/norm
+
+
 def initialize_general_system(size, dw_state, register):
     '''
     Builds full chain with a domain wall state at an end

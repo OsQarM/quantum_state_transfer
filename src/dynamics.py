@@ -57,7 +57,7 @@ def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, tf, N
     return total_full_fidelity, magnetizations
 
 
-def OneStepAlgorithm(initial_chain, final_chain, H_transport, ti, tf, Nstep):
+def OneStepAlgorithm(initial_chain, final_chain, H_transport, ti, tf, Nstep, N):
     """
     
     Runs the 2-step protocol to achieve quantum transport with domain walls
@@ -77,9 +77,9 @@ def OneStepAlgorithm(initial_chain, final_chain, H_transport, ti, tf, Nstep):
     """
 
     # Create DW registers and whole systems for initial and target state
-    simulation_result = time_evolution                (H_transport, initial_chain, ti, tf, Nstep)
-    full_fidelity     = calculate_full_fidelity       (simulation_result, final_chain)
-    magnetizations    = calculate_z_expectation_values(simulation_result, H_transport.sz_list)
+    simulation_result = time_evolution                  (H_transport, initial_chain, ti, tf, Nstep)
+    full_fidelity     = calculate_full_fidelity_standard(simulation_result, final_chain, N)
+    magnetizations    = calculate_z_expectation_values  (simulation_result, H_transport.sz_list)
 
     return full_fidelity, magnetizations, simulation_result
 
@@ -122,6 +122,24 @@ def calculate_full_fidelity(state_evolution, target_state):
     fidelity = np.zeros(len(state_evolution.times))
     for index, state in enumerate(state_evolution.states):
          fidelity[index] = (qt.fidelity(target_state, state))
+
+    return fidelity
+
+def calculate_full_fidelity_standard(state_evolution, target_state, N): 
+    '''
+    Calculates fidelity between every simulated time step and a target state that we have
+    previously defined
+
+    :state_evolution:(array(np.states)) simulated state dynamics
+    :target_state:(np.state) reference state for validation
+    '''
+    fidelity = np.zeros(len(state_evolution.times))
+    for index, state in enumerate(state_evolution.states):
+    # Apply phase correction and then calculate fidelity
+        phase_angle = -N*np.pi/2  # -90 degrees in radians
+        global_phase = np.exp(1j * phase_angle)
+        rotated_state = global_phase * state 
+        fidelity[index] = qt.fidelity(target_state, rotated_state)
 
     return fidelity
 
