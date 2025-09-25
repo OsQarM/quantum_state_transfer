@@ -139,7 +139,7 @@ def create_data_filename(N: int,
     L_str = f"{L:.3f}"  # Format float to 3 decimal places
     
     # Create filename
-    if extension:
+    if extension is None:
         filename = f"{base_name}_N{N_str}_J{J}_L{L_str}_{dict_str}_{timestamp}"
     else:
         filename = f"{base_name}_N{N_str}_J{J}_L{L_str}_{dict_str}_{timestamp}_{extension}"

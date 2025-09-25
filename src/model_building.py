@@ -82,6 +82,7 @@ def create_domain_wall_state(state_dictionary, register):
     norm = np.sqrt(state.dag()*state)
     return state/norm
 
+
 def initialize_general_system(size, dw_state, register):
     '''
     Builds full chain with a domain wall state at an end
