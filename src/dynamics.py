@@ -34,7 +34,7 @@ def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, tf, N
     if AutoSwitch == False:
         step_of_min_z = 460
     elif AutoSwitch == True:
-        step_of_min_z = max(int(np.argmin(magnetizations_calibration[:,-3])),10)
+        step_of_min_z = max(int(np.argmin(magnetizations_calibration[:,-1])),10)
         #step_of_min_z = max(int(Nstep//2 + np.argmax(magnetizations_calibration[Nstep//2:,-2])),10)
         #step_of_min_z = np.argsort(np.abs(magnetizations_calibration[:,-1]))[1]
         
@@ -136,10 +136,11 @@ def calculate_full_fidelity_standard(state_evolution, target_state, N):
     fidelity = np.zeros(len(state_evolution.times))
     for index, state in enumerate(state_evolution.states):
     # Apply phase correction and then calculate fidelity
-        phase_angle = -N*np.pi/2  # -90 degrees in radians
-        global_phase = np.exp(1j * phase_angle)
-        rotated_state = global_phase * state 
-        fidelity[index] = qt.fidelity(target_state, rotated_state)
+    # DOESN'T WORK YET (or hamiltonian dynamics are wrong)
+        phase_correction = (-1j)**(N-1)
+        overlap = target_state.dag()*state
+        amplitude = phase_correction*overlap
+        fidelity[index] = amplitude*np.conj(amplitude)
 
     return fidelity
 

@@ -304,23 +304,35 @@ def plot_multiple_ratio_trend_slope_2(x_data, y_data_dict, log_scale=True, show_
         
         # Calculate and store trend line if requested
         if show_trend:
-            # Linear regression using numpy
-            coeffs = np.polyfit(x_data, y_data, 1)
-            slope = coeffs[0]
-            intercept = coeffs[1]
-            trend_line = np.poly1d(coeffs)
-            y_trend = trend_line(x_data)
-            
-            # Plot trend line with matching color but dashed
-            ax.plot(x_data, y_trend, '--', linewidth=1.5, color=color, alpha=0.8)
-            
-            # Use the actual data line handle for legend, but with slope in label
-            legend_handles.append(line)
-            legend_labels.append(f'{curve_name} (α = {slope:.3f})')
-        else:
-            # If no trend lines, just use curve name
-            legend_handles.append(line)
-            legend_labels.append(curve_name)
+            # Power law fit: y = a * x^b
+            log_x = np.log10(x_data)
+            log_y = np.log10(y_data)
+
+            valid_idx = np.isfinite(log_x) & np.isfinite(log_y)
+            log_x_valid = log_x[valid_idx]
+            log_y_valid = log_y[valid_idx]
+
+            if len(log_x_valid) > 1:
+                # Linear fit on log data gives: log(y) = b*log(x) + log(a)
+                coeffs = np.polyfit(log_x_valid, log_y_valid, 1)
+                exponent = coeffs[0]  # This is the exponent 'b'
+                log_prefactor = coeffs[1]  # This is log(a)
+                prefactor = 10**log_prefactor  # This is 'a'
+
+                # Power law function
+                def power_law_fit(x):
+                    return prefactor * (x**exponent)
+
+                # Generate smooth trend line
+                x_trend = np.logspace(np.log10(min(x_data)), np.log10(max(x_data)), 100)
+                y_trend = power_law_fit(x_trend)
+
+                # Plot power law trend
+                ax.plot(x_trend, y_trend, '--', linewidth=1.5, color=color, alpha=0.8)
+
+                legend_handles.append(line)
+                legend_labels.append(f'{curve_name} (α = {exponent:.3f})')
+
 
     # --- Professional Styling ---
     # Font styling (Times New Roman-like)
@@ -361,6 +373,8 @@ def plot_multiple_ratio_trend_slope_2(x_data, y_data_dict, log_scale=True, show_
                           loc='upper left' if log_scale else 'best')
         legend.get_frame().set_linewidth(0.8)
     
+    ax.set_xscale("log")
+    ax.set_yscale("log")
     # Save figure if path provided
     if filepath:
         plt.savefig(f'{filepath}.png', bbox_inches='tight', dpi=300)
@@ -522,3 +536,25 @@ def plot_three_fidelity_curves(num_steps, fidelity_data_list, labels=None, color
 
     plt.show()
     return 
+
+
+
+"""
+            # Linear regression using numpy
+            coeffs = np.polyfit(x_data, y_data, 1)
+            slope = coeffs[0]
+            intercept = coeffs[1]
+            trend_line = np.poly1d(coeffs)
+            y_trend = trend_line(x_data)
+            
+            # Plot trend line with matching color but dashed
+            ax.plot(x_data, y_trend, '--', linewidth=1.5, color=color, alpha=0.8)
+            
+            # Use the actual data line handle for legend, but with slope in label
+            legend_handles.append(line)
+            legend_labels.append(f'{curve_name} (α = {slope:.3f})')
+        else:
+            # If no trend lines, just use curve name
+            legend_handles.append(line)
+            legend_labels.append(curve_name)
+"""
