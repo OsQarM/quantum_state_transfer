@@ -8,12 +8,6 @@ sy = qt.sigmay()
 sz = qt.sigmaz()
 
 
-def standard_J(size, factor):
-    strengths = np.zeros(size-1)
-    for i in range(size-1):
-        strengths[i] = 0.5*factor*np.sqrt((i+1)*(size-i-1))
-    return strengths
-
 #couplings in statndard encoding
 def mirror_symmetric_terms(size, factor):
     strengths = np.zeros(size)
@@ -21,21 +15,12 @@ def mirror_symmetric_terms(size, factor):
         strengths[i] = -0.5*factor*np.sqrt((i+1)*(size-i))
     return strengths
 
-#couplings in domain wall
-def tn_definition(data_j):
-    size = len(data_j)
-    out = np.zeros(size)
-    for i in range(size):
-        out[i] = -data_j[i]
-    return out
-
-
 class Hamiltonian:
     '''Hamiltonian object. It is first initialized, then chosen the type 
         (standard,forward, backward)    
     '''
     def __init__(self, system_size, mode, lambda_factor, register_size=None, global_J=None,
-                 j_error = 0.0, z_error = 0.0, l_error = 0.0):
+                 j_error = None, z_error = None, l_error = None):
         '''
         Parameter description
         
@@ -54,6 +39,7 @@ class Hamiltonian:
         self.j_err = j_error
         self.l_err = l_error
         self.z_err = z_error
+
         self.sx_list, self.sy_list, self.sz_list = self._initialize_operators()
         self.couplings = self._calculate_couplings()
         self.ham = self._build_hamiltonian()
@@ -84,18 +70,11 @@ class Hamiltonian:
         '''Create a different type of hamiltonian depending on the string passed'''
 
         if self.mode == "standard":
-            couplings = mirror_symmetric_terms(self.n_spins-1, self.lambda_factor)
-            H = self.hamiltonian_standard(couplings['lambda'])
-        else:
-            if self.mode == "transport":
-                couplings = mirror_symmetric_terms(self.n_spins-1, self.lambda_factor)
-                tn = tn_definition(couplings)
-                H = self.hamiltonian_forward(tn)
-            elif self.mode == "reset":
-                couplings = mirror_symmetric_terms(self.n_spins - self.register_size, self.lambda_factor)
-                tn = tn_definition(couplings)
-                H = self.hamiltonian_backward(tn)
-
+            H = self.hamiltonian_standard()
+        elif self.mode == "transport":
+            H = self.hamiltonian_transport()
+        elif self.mode == "reset":
+            H = self.hamiltonian_reset()
         return H
     
 
@@ -117,16 +96,16 @@ class Hamiltonian:
         error_free_l = mirror_symmetric_terms(length, self.lambda_factor)
 
         #errors in transverse fields
-        if self.err and self.l_err != 0.0:
+        if self.l_err and self.l_err != 0.0:
             couplings["lambda"] = errors.apply_gaussian_rel_error(error_free_l, self.l_err)
         else:
             couplings["lambda"] = error_free_l
 
         #errors in domain wall couplings
-        if self.j_err:  #not used in standard encoding
+        if self.J:  #not used in standard encoding
             error_free_j = [self.J]*(self.n_spins -1)
             #J at ends without error, correspond to local fields at chain ends
-            if self.j_err != 0.0:
+            if self.j_err and self.j_err != 0.0:
                 couplings["J"] = [self.J] + errors.apply_gaussian_rel_error(error_free_j, self.j_err) + [self.J]
             else:
                 couplings["J"] = 2*[self.J] + error_free_j
@@ -139,51 +118,80 @@ class Hamiltonian:
         return couplings
 
 
-    def hamiltonian_standard(self, couplings):
+    def hamiltonian_standard(self):
         '''
         Build Hamiltonian in standard encoding
         :couplings:(list(float)) coupling strength between every qubit pair of the chain
         '''
         Ham = 0
-        # Interaction terms
-        for n in range(self.n_spins - 1):
-            Ham += 0.5 * couplings[n] * self.sx_list[n] * self.sx_list[n + 1]
-            Ham += 0.5 * couplings[n] * self.sy_list[n] * self.sy_list[n + 1]
+
+        l_terms = self.couplings["lambda"]
+        z_terms = self.couplings["z"]
+
+        # Interaction terms (not in last spin)
+        for i in range(self.n_spins - 1):
+            #dynamics
+            Ham += 0.5 * l_terms[i] * self.sx_list[i] * self.sx_list[i + 1]
+            Ham += 0.5 * l_terms[i] * self.sy_list[i] * self.sy_list[i + 1]
+
+        #residual z fields
+        for i in range(self.n_spins):
+            Ham += z_terms[i] * self.sz_list[i]
+
         return Ham
     
-    def hamiltonian_forward(self, tn):
+    def hamiltonian_transport(self):
         '''
         Build Hamiltonian in domain wall encoding in forward configuration
         :tn:(list(float)) transverse field strength in every qubit
         '''
         Ham = 0
+
+        l_terms = self.couplings["lambda"]
+        z_terms = self.couplings["z"]
+        j_terms = self.couplings["J"]
+
         #Transverse field but not in first spin
         for i in range(1, self.n_spins):
-            Ham += -tn[i-1] * self.sx_list[i]
+            Ham += -l_terms[i-1] * self.sx_list[i]
+
         #Virtual qubit down at end of chain
-        Ham+= +self.J*self.sz_list[self.n_spins-1]
-        #Interaction terms with the rest of the spins
+        Ham+= j_terms[-1]*self.sz_list[self.n_spins-1]
+
+        #Interaction terms with the rest of the spins except for the last one
         for i in range(0, self.n_spins-1):
-            Ham += self.J* self.sz_list[i]*self.sz_list[i+1]
-    
+            Ham += j_terms[i]* self.sz_list[i]*self.sz_list[i+1]
+
+        #Residual z fields
+        for i in range(0,self.n_spins):
+            Ham += z_terms[i] * self.sz_list[i]
+
         return Ham
 
-    def hamiltonian_backward(self, tn):
+    def hamiltonian_reset(self):
         '''
         Build Hamiltonian in domain wall encoding in forward configuration
         :tn:(list(float)) transverse field strength in every qubit
         '''
         Ham = 0
+
+        l_terms = self.couplings["lambda"]
+        z_terms = self.couplings["z"]
+        j_terms = self.couplings["J"]
+
         #Transverse field but not in Bob's register
         for i in range(0, self.n_spins - self.register_size):
-            Ham += -tn[i] * self.sx_list[i]
+            Ham += -l_terms[i] * self.sx_list[i]
+
         #Virtual qubit down at start of chain
-        Ham += +self.J*self.sz_list[0]
+        Ham += +j_terms[1]*self.sz_list[0]
+
         #Interaction terms with the rest of the spins
         for i in range(0, self.n_spins-1):
-            Ham += self.J* self.sz_list[i]*self.sz_list[i+1]
+            Ham += j_terms[i]* self.sz_list[i]*self.sz_list[i+1]
+        
+        #Residual z fields
+        for i in range(0,self.n_spins):
+            Ham += z_terms[i] * self.sz_list[i]
 
         return Ham
-    
-
-

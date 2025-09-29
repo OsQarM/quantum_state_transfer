@@ -6,31 +6,6 @@ import Hamiltonian as Ham
 ket0 = qt.basis(2, 0)
 ket1 = qt.basis(2, 1)
 
-### STATE GENERATION FOR DIRECT STATES
-
-def initialize_1_qubit_system(size, alpha, beta, register): 
-    '''
-    Generate chain in state |0> with either first or last spin 
-    in a superposition of |0> and |1> 
-    
-    :size:(int) Length of chain
-    :alpha, beta:(complex) weights of 0 and 1 in end spin
-    :register:(str) Either "Alice" or "Bob", puts state either at begining or end of chain
-
-    '''
-    end_spin = alpha*qt.basis(2,0) + beta*qt.basis(2,1)
-    norm = np.sqrt(end_spin.dag()*end_spin)
-    end_spin = end_spin/norm
-    #put spin at chosen end depending on register
-    if register == "Alice":
-        state_list = [end_spin] + [qt.basis(2, 0)] * (size - 1)
-    elif register == "Bob":
-        state_list =  [qt.basis(2, 0)] * (size - 1) + [end_spin]
-    #Total state is product state of spins
-    chain_state = qt.tensor(state_list) 
-
-    return chain_state
-
 
 ### STATE GENERATION FOR DOMAIN WALLS
 
@@ -83,6 +58,7 @@ def create_domain_wall_state(state_dictionary, register):
     return state/norm
 
 
+### STATE GENERATION FOR DIRECT STATES
 
 def create_standard_state(state_dictionary, register):
     '''
@@ -151,7 +127,7 @@ def initialize_general_system(size, dw_state, register):
     return initial_state
 
 
-def create_initial_and_target(state_dictionary, N):
+def create_DW_initial_and_target(state_dictionary, N):
     initial_state = create_domain_wall_state(state_dictionary, register='Alice')
     final_state   = create_domain_wall_state(state_dictionary, register='Bob')
 
@@ -162,15 +138,24 @@ def create_initial_and_target(state_dictionary, N):
     
     return initial_chain, final_chain, register_size
 
+def create_ST_initial_and_target(state_dictionary, N):
+    initial_state = create_standard_state(state_dictionary, register='Alice')
+    final_state   = create_standard_state(state_dictionary, register='Bob')
+
+    initial_chain = initialize_general_system(N, initial_state, register='Alice')
+    final_chain   = initialize_general_system(N, final_state, register='Bob')
+    
+    return initial_chain, final_chain
+
 def build_hamiltonians(N, lmd, J, reg_size):
 
     H_transport = Ham.Hamiltonian(system_size = N,
-                        mode = "forward",
+                        mode = "transport",
                         lambda_factor = lmd,
                         global_J = J
                         )
     H_reset     = Ham.Hamiltonian(system_size = N,
-                        mode = "backward",
+                        mode = "reset",
                         lambda_factor = lmd,
                         register_size = reg_size,
                         global_J = J

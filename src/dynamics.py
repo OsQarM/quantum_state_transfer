@@ -81,7 +81,7 @@ def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, perio
     return total_full_fidelity, magnetizations
 
 
-def OneStepAlgorithm(initial_chain, final_chain, H_transport, ti, tf, Nstep, N):
+def OneStepAlgorithm(initial_chain, final_chain, H_transport, ti, period, Nstep, factor = 1.0, N = None):
     """
     
     Runs the 2-step protocol to achieve quantum transport with domain walls
@@ -101,11 +101,11 @@ def OneStepAlgorithm(initial_chain, final_chain, H_transport, ti, tf, Nstep, N):
     """
 
     # Create DW registers and whole systems for initial and target state
-    simulation_result = time_evolution                  (H_transport, initial_chain, ti, tf, Nstep)
+    simulation_result = time_evolution                  (H_transport, initial_chain, ti, period*factor, int(Nstep*factor))
     full_fidelity     = calculate_full_fidelity_standard(simulation_result, final_chain, N)
     magnetizations    = calculate_z_expectation_values  (simulation_result, H_transport.sz_list)
 
-    return full_fidelity, magnetizations, simulation_result
+    return full_fidelity, magnetizations
 
 
 
@@ -149,7 +149,7 @@ def calculate_full_fidelity(state_evolution, target_state):
 
     return fidelity
 
-def calculate_full_fidelity_standard(state_evolution, target_state, N): 
+def calculate_full_fidelity_standard(state_evolution, target_state, N = None): 
     '''
     Calculates fidelity between every simulated time step and a target state that we have
     previously defined
@@ -161,10 +161,12 @@ def calculate_full_fidelity_standard(state_evolution, target_state, N):
     for index, state in enumerate(state_evolution.states):
     # Apply phase correction and then calculate fidelity
     # DOESN'T WORK YET (or hamiltonian dynamics are wrong)
-        phase_correction = (-1j)**(N-1)
-        overlap = target_state.dag()*state
-        amplitude = phase_correction*overlap
-        fidelity[index] = amplitude*np.conj(amplitude)
+        #phase_correction = (-1j)**(N-1)
+        #overlap = target_state.dag()*state
+        #amplitude = phase_correction*overlap
+        #fidelity[index] = amplitude*np.conj(amplitude)
+        fidelity[index] = (qt.fidelity(target_state, state))
+
 
     return fidelity
 
