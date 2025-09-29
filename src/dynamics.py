@@ -5,7 +5,46 @@ import model_building as md
 import data_handling as dh
 
 #˙
-def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, tf, Nstep, AutoSwitch = False):
+
+def chain_calibration(initial_chain, H_transport, ti, tf, Nstep, AutoSwitch = True):
+    """
+    Runs transport with forward hamiltonian, finds point of swithc to be used in the full algorithm
+
+    Args:
+        initial_chain: qutip product state of the initial configuration
+        H_transport: Hamiltonian class object with the dynamics of the calibration
+        ti: Float initial simulation time
+        tf: Float final simulation time
+        Nsteps: Integer number of timesteps
+        AutoSwitch: True: Find minimum ; False, return a hardcoded input (used for testing and debugging)
+
+    Returns:
+        step_of_min_z: Step in which the hamiltonian must swtich (i.e transport completed)
+        period: time of H swithc, can be used if step size is changed in future simulations
+        Both are unique to the ratio J/lambda
+    
+    """
+
+    result_calibration         = time_evolution                (H_transport, initial_chain, ti, tf, Nstep)
+    magnetizations_calibration = calculate_z_expectation_values(result_calibration, H_transport.sz_list)
+
+    # lazy method. Needs refining
+    if AutoSwitch == False:
+        step_of_min_z = 460
+    elif AutoSwitch == True:
+        # Different options depending on the type of state sent (To do: Find a unifying method for an arbitraty state)
+
+        step_of_min_z = max(int(np.argmin(magnetizations_calibration[:,-1])),10)
+        #step_of_min_z = max(int(np.argmin(magnetizations_calibration[:,-3])),10)
+        #step_of_min_z = max(int(Nstep//2 + np.argmax(magnetizations_calibration[Nstep//2:,-2])),10)
+        #step_of_min_z = np.argsort(np.abs(magnetizations_calibration[:,-1]))[1]
+
+    period = (ti - tf)*step_of_min_z/Nstep
+
+    return step_of_min_z, period
+
+
+def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, period, Nstep, factor = 1.0):
     """
     
     Runs the 2-step protocol to achieve quantum transport with domain walls
@@ -18,6 +57,7 @@ def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, tf, N
         ti: Float initial simulation time
         tf: Float final simulation time
         Nsteps: Integer number of timesteps
+        factor: Has to be >= 1, extends simulation of reset to better see the evolution after transport time
 
     Returns:
         total_full_fidelity: Array of fidelities between simulated states and target state
@@ -25,29 +65,13 @@ def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, tf, N
 
     """
 
-    # Create DW registers and whole systems for initial and target state
-    result_calibration         = time_evolution                (H_transport, initial_chain, ti, tf, Nstep)
-    full_fidelity_calibration  = calculate_full_fidelity       (result_calibration, final_chain)
-    magnetizations_calibration = calculate_z_expectation_values(result_calibration, H_transport.sz_list)
-
-    # lazy method. Needs refining
-    if AutoSwitch == False:
-        step_of_min_z = 460
-    elif AutoSwitch == True:
-        step_of_min_z = max(int(np.argmin(magnetizations_calibration[:,-1])),10)
-        #step_of_min_z = max(int(Nstep//2 + np.argmax(magnetizations_calibration[Nstep//2:,-2])),10)
-        #step_of_min_z = np.argsort(np.abs(magnetizations_calibration[:,-1]))[1]
-        
-
-    period = (tf - ti)*step_of_min_z/Nstep
-
-    result_transport         = time_evolution                (H_transport, initial_chain, ti, period, int(step_of_min_z))
+    result_transport         = time_evolution                (H_transport, initial_chain, ti, period, int(Nstep))
     full_fidelity_transport  = calculate_full_fidelity       (result_transport, final_chain)
     magnetizations_transport = calculate_z_expectation_values(result_transport, H_transport.sz_list)
 
     middle_chain = result_transport.states[-1]
 
-    result_reset         = time_evolution                (H_reset, middle_chain, ti, period*1.12, int(step_of_min_z*1.12)) #Additional time for validation and aesthetics
+    result_reset         = time_evolution                (H_reset, middle_chain, ti, period*factor, int(Nstep*factor)) #Additional time for validation and aesthetics
     full_fidelity_reset  = calculate_full_fidelity       (result_reset, final_chain)
     magnetizations_reset = calculate_z_expectation_values(result_reset, H_reset.sz_list)
 

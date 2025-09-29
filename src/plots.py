@@ -6,7 +6,7 @@ import numpy as np
 from scipy.signal import find_peaks
 from scipy.interpolate import interp1d
 
-def plot_test_fidelity(fidelity_data, N, filepath=None):
+def plot_fidelity(fidelity_data, N, filepath=None):
     plt.figure(figsize=(8, 6), dpi=300)
     # Plot each curve
     num_steps = len(fidelity_data)
@@ -26,6 +26,7 @@ def plot_test_fidelity(fidelity_data, N, filepath=None):
     if filepath:
         plt.savefig(f'{filepath}.png', bbox_inches='tight', dpi=300)
         plt.savefig(f'{filepath}.pdf', bbox_inches='tight', dpi=300)
+        print(f'Figure saved to {filepath}')
 
     # Adjust layout and display
     plt.show()
@@ -35,7 +36,7 @@ def plot_test_fidelity(fidelity_data, N, filepath=None):
 #########################
 
 
-def plot_test_z_expectations(z_data, N, filepath=None):
+def plot_z_expectations(z_data, N, filepath=None):
     # Create simplified figure with only line plot
     fig = plt.figure(figsize=(8, 6), dpi=300)
 
@@ -88,6 +89,7 @@ def plot_test_z_expectations(z_data, N, filepath=None):
     if filepath:
         plt.savefig(f'{filepath}.png', bbox_inches='tight', dpi=300)
         plt.savefig(f'{filepath}.pdf', bbox_inches='tight', dpi=300)
+        print(f'Figure saved to {filepath}')
 
     plt.show()
     return

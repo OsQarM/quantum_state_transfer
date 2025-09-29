@@ -1,6 +1,7 @@
 # Numerics
 import qutip as qt
 import numpy as np
+import errors
 
 sx = qt.sigmax()
 sy = qt.sigmay()
@@ -14,10 +15,10 @@ def standard_J(size, factor):
     return strengths
 
 #couplings in statndard encoding
-def domain_wall_J(size, factor):
+def mirror_symmetric_terms(size, factor):
     strengths = np.zeros(size)
     for i in range(0,size):
-        strengths[i] = 0.5*factor*np.sqrt((i+1)*(size-i))
+        strengths[i] = -0.5*factor*np.sqrt((i+1)*(size-i))
     return strengths
 
 #couplings in domain wall
@@ -33,7 +34,8 @@ class Hamiltonian:
     '''Hamiltonian object. It is first initialized, then chosen the type 
         (standard,forward, backward)    
     '''
-    def __init__(self, system_size, mode, lambda_factor, register_size=None, global_J=None):
+    def __init__(self, system_size, mode, lambda_factor, register_size=None, global_J=None,
+                 j_error = 0.0, z_error = 0.0, l_error = 0.0):
         '''
         Parameter description
         
@@ -49,7 +51,11 @@ class Hamiltonian:
         self.J = global_J
         self.register_size = register_size
         self.mode = mode
+        self.j_err = j_error
+        self.l_err = l_error
+        self.z_err = z_error
         self.sx_list, self.sy_list, self.sz_list = self._initialize_operators()
+        self.couplings = self._calculate_couplings()
         self.ham = self._build_hamiltonian()
 
     
@@ -78,19 +84,60 @@ class Hamiltonian:
         '''Create a different type of hamiltonian depending on the string passed'''
 
         if self.mode == "standard":
-            couplings = standard_J(self.n_spins, self.lambda_factor)
-            H = self.hamiltonian_standard(couplings)
-        elif self.mode == "forward":
-            couplings = domain_wall_J(self.n_spins-1, self.lambda_factor)
-            tn = tn_definition(couplings)
-            H = self.hamiltonian_forward(tn)
-        elif self.mode == "backward":
-            couplings = domain_wall_J(self.n_spins - self.register_size, self.lambda_factor)
-            tn = tn_definition(couplings)
-            H = self.hamiltonian_backward(tn)
+            couplings = mirror_symmetric_terms(self.n_spins-1, self.lambda_factor)
+            H = self.hamiltonian_standard(couplings['lambda'])
+        else:
+            if self.mode == "transport":
+                couplings = mirror_symmetric_terms(self.n_spins-1, self.lambda_factor)
+                tn = tn_definition(couplings)
+                H = self.hamiltonian_forward(tn)
+            elif self.mode == "reset":
+                couplings = mirror_symmetric_terms(self.n_spins - self.register_size, self.lambda_factor)
+                tn = tn_definition(couplings)
+                H = self.hamiltonian_backward(tn)
 
         return H
     
+
+    def _calculate_couplings(self):
+        """
+        Calculate couplings for lambda, J and z fields for different situations (standard or domain walls)
+        If errors are zeros we avoid calling the errors.py script
+
+        Returns: 
+            couplings: Dictionary containing all necesary values for the hamiltonian, indexed by their name
+                       with errors added if requested
+
+        """
+        #Define all Hamiltonian couplings as dictionary
+        couplings = {}
+
+        #Calculate ideal mirror symmetry
+        length = self.n_spins - (self.register_size if self.mode == "reset" else 1)
+        error_free_l = mirror_symmetric_terms(length, self.lambda_factor)
+
+        #errors in transverse fields
+        if self.err and self.l_err != 0.0:
+            couplings["lambda"] = errors.apply_gaussian_rel_error(error_free_l, self.l_err)
+        else:
+            couplings["lambda"] = error_free_l
+
+        #errors in domain wall couplings
+        if self.j_err:  #not used in standard encoding
+            error_free_j = [self.J]*(self.n_spins -1)
+            #J at ends without error, correspond to local fields at chain ends
+            if self.j_err != 0.0:
+                couplings["J"] = [self.J] + errors.apply_gaussian_rel_error(error_free_j, self.j_err) + [self.J]
+            else:
+                couplings["J"] = 2*[self.J] + error_free_j
+
+        if self.z_err and self.z_err != 0.0:
+            couplings["z"] = errors.apply_gaussian_abs_error([0]*self.n_spins, self.z_err)
+        else:
+            couplings["z"] = [0]*self.n_spins
+
+        return couplings
+
 
     def hamiltonian_standard(self, couplings):
         '''
