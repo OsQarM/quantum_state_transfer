@@ -286,7 +286,7 @@ def plot_multiple_ratio_trend_slope_2(x_data, y_data_dict, log_scale=True, show_
         filepath (str): Path to save the figure
     """
     # Create a figure with constrained layout
-    fig, ax = plt.subplots(figsize=(8, 6), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(8, 6), constrained_layout=True, dpi=300)
     
     # Use the color palette from the second function (commonly used colors in quantum plots)
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', 
@@ -342,8 +342,8 @@ def plot_multiple_ratio_trend_slope_2(x_data, y_data_dict, log_scale=True, show_
     plt.rcParams['mathtext.fontset'] = 'dejavuserif'
     
     # Axis labels with requested font sizes
-    ax.set_xlabel(r'$log(J/\lambda)$', fontsize=15, labelpad=10)
-    ax.set_ylabel('$\log(1 - F)$', fontsize=15, labelpad=10)
+    ax.set_xlabel(r'$J/\lambda$', fontsize=15, labelpad=10)
+    ax.set_ylabel('$1 - F$', fontsize=15, labelpad=10)
     
     # Title with requested font size
     ax.set_title('Error vs. Ratio $J/\lambda$', fontsize=16, pad=12)
