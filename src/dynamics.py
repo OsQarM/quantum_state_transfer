@@ -26,7 +26,7 @@ def chain_calibration(initial_chain, H_transport, ti, tf, Nstep, AutoSwitch = Tr
     """
 
     result_calibration         = time_evolution                (H_transport, initial_chain, ti, tf, Nstep)
-    magnetizations_calibration = calculate_z_expectation_values(result_calibration, H_transport.sz_list)
+    magnetizations_calibration = calculate_expectation_values(result_calibration, H_transport)
 
     # lazy method. Needs refining
     if AutoSwitch == False:
@@ -34,7 +34,7 @@ def chain_calibration(initial_chain, H_transport, ti, tf, Nstep, AutoSwitch = Tr
     elif AutoSwitch == True:
         # Different options depending on the type of state sent (To do: Find a unifying method for an arbitraty state)
 
-        step_of_min_z = max(int(np.argmin(magnetizations_calibration[:,-1])),10)
+        step_of_min_z = max(int(np.argmin(magnetizations_calibration["Sz"][:,-1])),10)
         #step_of_min_z = max(int(np.argmin(magnetizations_calibration[:,-3])),10)
         #step_of_min_z = max(int(Nstep//2 + np.argmax(magnetizations_calibration[Nstep//2:,-2])),10)
         #step_of_min_z = np.argsort(np.abs(magnetizations_calibration[:,-1]))[1]
@@ -67,13 +67,13 @@ def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, perio
 
     result_transport         = time_evolution                (H_transport, initial_chain, ti, period, int(Nstep))
     full_fidelity_transport  = calculate_full_fidelity       (result_transport, final_chain)
-    magnetizations_transport = calculate_z_expectation_values(result_transport, H_transport.sz_list)
+    magnetizations_transport = calculate_expectation_values(result_transport, H_transport)
 
     middle_chain = result_transport.states[-1]
 
     result_reset         = time_evolution                (H_reset, middle_chain, ti, period*factor, int(Nstep*factor)) #Additional time for validation and aesthetics
     full_fidelity_reset  = calculate_full_fidelity       (result_reset, final_chain)
-    magnetizations_reset = calculate_z_expectation_values(result_reset, H_reset.sz_list)
+    magnetizations_reset = calculate_expectation_values(result_reset, H_reset)
 
     total_full_fidelity = np.concatenate((full_fidelity_transport, full_fidelity_reset), axis=0)
     magnetizations      = np.concatenate((magnetizations_transport, magnetizations_reset), axis=0)
@@ -103,7 +103,7 @@ def OneStepAlgorithm(initial_chain, final_chain, H_transport, ti, period, Nstep,
     # Create DW registers and whole systems for initial and target state
     simulation_result = time_evolution                  (H_transport, initial_chain, ti, period*factor, int(Nstep*factor))
     full_fidelity     = calculate_full_fidelity_standard(simulation_result, final_chain, N)
-    magnetizations    = calculate_z_expectation_values  (simulation_result, H_transport.sz_list)
+    magnetizations    = calculate_expectation_values  (simulation_result, H_transport)
 
     return full_fidelity, magnetizations
 
@@ -171,18 +171,54 @@ def calculate_full_fidelity_standard(state_evolution, target_state, N = None):
     return fidelity
 
 
-def calculate_z_expectation_values(state_evolution, sigma_z_list):    
-    #Find minimum difference between expected Z val of last spin and initial Z of first spin
+def calculate_expectation_values(state_evolution, Hamiltonian):
+    """
+    Calculate expectation value of spin X,Y,Z on time evolution of chain
+
+    Args:
+        state_evolution: result of qutip.sesolve of length Nsteps
+        Hamiltonian: qutip object containing properties of transport Hamiltonian
+
+    Returns:
+        magn_t: Dictionary containing result of each observable for each qubit and each timestep
+    """   
+
+    sigma_x_list = Hamiltonian.sx_list
+    sigma_y_list = Hamiltonian.sy_list
+    sigma_z_list = Hamiltonian.sz_list
+
+    magn_t = {}
+
     #calculate expectation value of sz for each spin
-    magn_t = np.array([[qt.expect(op, state) 
-                        for op in sigma_z_list] 
-                       for state in state_evolution.states])
+    magn_t["Sx"] = calculate_observable_along_chain(state_evolution, sigma_x_list)
+    magn_t["Sy"] = calculate_observable_along_chain(state_evolution, sigma_y_list)
+    magn_t["Sz"] = calculate_observable_along_chain(state_evolution, sigma_z_list)
+
     return magn_t
 
-def get_z_expectation_maximums(n_spins, z_expectation_values):
+def calculate_observable_along_chain(state_evolution, observable):
+    """
+    Calculates a given observable over every spin of the chain and every timestep of simulation
+
+    Args:
+    state_evolution: result of qutip.sesolve of length Nsteps
+    observable: list of operators where each index applies an observable on a chain qubit
+
+    Returns: 
+    2D array of the results for each timestep and qubit
+    """
+    return np.array([[qt.expect(op, state) 
+                        for op in observable] 
+                       for state in state_evolution.states])
+
+
+
+def get_expectation_maximums(n_spins, expectation_values):
     '''
     Find maximum in every spin magnetization curve and their indices
     '''
+    z_expectation_values = expectation_values["Sz"]
+
     max_magn_i = [np.max(z_expectation_values[:,i]) for i in range(n_spins)]
     max_magn_i_index = [np.argmax(z_expectation_values[:,i]) for i in range(n_spins)]
 

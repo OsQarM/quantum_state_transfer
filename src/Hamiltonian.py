@@ -20,7 +20,7 @@ class Hamiltonian:
         (standard,forward, backward)    
     '''
     def __init__(self, system_size, mode, lambda_factor, register_size=None, global_J=None,
-                 j_error = None, z_error = None, l_error = None):
+                 j_error = None, z_error = None, l_error = None, correction = 2):
         '''
         Parameter description
         
@@ -39,6 +39,7 @@ class Hamiltonian:
         self.j_err = j_error
         self.l_err = l_error
         self.z_err = z_error
+        self.correction = correction
 
         self.sx_list, self.sy_list, self.sz_list = self._initialize_operators()
         self.couplings = self._calculate_couplings()
@@ -133,6 +134,12 @@ class Hamiltonian:
             #dynamics
             Ham += 0.5 * l_terms[i] * self.sx_list[i] * self.sx_list[i + 1]
             Ham += 0.5 * l_terms[i] * self.sy_list[i] * self.sy_list[i + 1]
+        
+        #phase correction
+        for i in range(self.n_spins):
+            #Ham +=  -0.25*self.lambda_factor*(self.n_spins +1) * self.sz_list[i]
+            Ham +=  -self.lambda_factor*(self.n_spins -1)/(4) * self.sz_list[i]
+
 
         #residual z fields
         for i in range(self.n_spins):

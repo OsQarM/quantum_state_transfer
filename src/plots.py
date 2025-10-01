@@ -36,7 +36,7 @@ def plot_fidelity(fidelity_data, N, filepath=None):
 #########################
 
 
-def plot_z_expectations(z_data, N, filepath=None):
+def plot_expectations(z_data, N, filepath=None):
     # Create simplified figure with only line plot
     fig = plt.figure(figsize=(8, 6), dpi=300)
 
@@ -79,6 +79,64 @@ def plot_z_expectations(z_data, N, filepath=None):
                   fontsize=10, framealpha=0.9, loc='best')
     else:
         ax.legend(fontsize=9, framealpha=0.9, loc='best')
+
+    # Title
+    plt.title(r'Spin Magnetization Dynamics ($N={}$)'.format(N), fontsize=14, pad=15)
+
+    # Final layout adjustment
+    plt.tight_layout()
+
+    if filepath:
+        plt.savefig(f'{filepath}.png', bbox_inches='tight', dpi=300)
+        plt.savefig(f'{filepath}.pdf', bbox_inches='tight', dpi=300)
+        print(f'Figure saved to {filepath}')
+
+    plt.show()
+    return
+
+
+def plot_expectations_gradient(z_data, N, filepath=None):
+    # Create simplified figure with only line plot
+    fig = plt.figure(figsize=(8, 6), dpi=300)
+
+    # Use a colormap for distinct colors
+    colors = plt.cm.viridis(np.linspace(0, 1, N))  # You can change 'viridis' to other colormaps
+
+    # ========== SIMPLIFIED LINE PLOT ==========
+    ax = fig.add_subplot(111)
+
+    for i in range(N):
+        magn = z_data[:,i]
+        norm_time = np.linspace(0, 1, len(magn))
+
+        lineprops = {
+            'color': colors[i],
+            'lw': 2.5 if i in [0, N-1] else 1.0,
+            'alpha': 1.0 if i in [0, N-1] else 0.7,
+            'label': f'Spin {i}' if N <= 15 else (r'First spin $(n=0)$' if i == 0 else (r'Last spin $(n={})$'.format(N-1) if i == N-1 else None))
+        }
+
+        ax.plot(norm_time, magn, **lineprops)
+
+    # Formatting
+    ax.set_xlabel(r'Normalized time $t/\tau_{\mathrm{transfer}}$', fontsize=12)
+    ax.set_ylabel(r'Magnetization $\langle Z \rangle$', fontsize=12)
+    ax.set_ylim(-1.1, 1.1)
+    ax.set_xlim(0, 1)
+    ax.tick_params(labelsize=10)
+
+    # Clean grid
+    ax.grid(True, linestyle=':', alpha=0.3, color='gray')
+
+    # Legend handling
+    if N > 15:
+        # Only show first and last for clarity when many spins
+        handles, labels = ax.get_legend_handles_labels()
+        ax.legend([handles[0], handles[-1]], [labels[0], labels[-1]], 
+                  fontsize=10, framealpha=0.9, loc='best')
+    elif N > 1:
+        # Show all labels but make legend compact
+        ax.legend(fontsize=8, framealpha=0.9, loc='best', ncol=2 if N > 8 else 1)
 
     # Title
     plt.title(r'Spin Magnetization Dynamics ($N={}$)'.format(N), fontsize=14, pad=15)
