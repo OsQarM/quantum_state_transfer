@@ -138,7 +138,7 @@ class Hamiltonian:
         #phase correction
         for i in range(self.n_spins):
             #Ham +=  -0.25*self.lambda_factor*(self.n_spins +1) * self.sz_list[i]
-            Ham +=  -self.lambda_factor*(self.n_spins -1)/(4) * self.sz_list[i]
+            Ham +=  1*self.lambda_factor*(1*self.n_spins -2)/(4) * self.sz_list[i]
 
 
         #residual z fields

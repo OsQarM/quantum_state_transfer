@@ -9,13 +9,17 @@ ket1 = qt.basis(2, 1)
 
 ### STATE GENERATION FOR DOMAIN WALLS
 
-def create_domain_wall_state(state_dictionary, register):
+def create_domain_wall_state(state_dictionary, register, one_step = False):
     '''
     Translates superposition of states into domain wall state of a register (Alice or Bob)
 
-    :state_dictionary:(dict) Components of state and weights 
+    Args:
+        state_dictionary:(dict) Components of state and weights 
                              example: |psi> = ["001":0.4,"101":0.2,"111":0.6,"110":0.35]
-    :register:(str) Either "Alice" or "Bob", puts state either at begining or end of chain 
+        register:(str) Either "Alice" or "Bob", puts state either at begining or end of chain 
+    
+    Returns:
+        Normalized DW state as product state of qutip objects
 
     '''
     state = 0
@@ -25,7 +29,17 @@ def create_domain_wall_state(state_dictionary, register):
         #first bit of state is always a down wire qubit
         previous_spin = "0"
 
-        #Invert order if building state in Alice's register (build starting from last qubit)
+        #for one-step protocol only
+        if one_step == True:
+            #count number of domain walls
+            excitation_number = term.count("1")
+            #if odd, make it even using auxiliary qubit 
+            if excitation_number % 2 != 0:
+                term.append("1")
+            else:
+                term.append("0")
+
+        #Invert order if building state in Alice's register (build starting from last qubit, the one touching the chain)
         if register == "Alice":
             loop_list = term[::-1]
         elif register == "Bob":
@@ -34,28 +48,42 @@ def create_domain_wall_state(state_dictionary, register):
         #loop over bits
         for bit in loop_list:
             #put 0 or 1 to create (or not) domain wall and update previous_spin variable
-            if bit == "1":
-                if previous_spin == "0":
-                    dw_spins.append(ket1)
-                    previous_spin = "1"
-                elif previous_spin == "1":
-                    dw_spins.append(ket0)
-                    previous_spin = "0"
-            elif bit == "0":
-                if previous_spin == "0":
-                    dw_spins.append(ket0)
-                    previous_spin = "0"
-                elif previous_spin == "1":
-                    dw_spins.append(ket1)
-                    previous_spin = "1"
+            dw_spins, previous_spin = append_bit(bit, dw_spins, previous_spin)
 
-        #reverse order of list and make tensor product
+        #reverse order of list and make tensor product (for Alice restores order, for Bob, reverts it (mirror image))
         dw_term = qt.tensor(dw_spins[::-1])
         #add to full state with corresponding weight
         state += state_dictionary[term]*dw_term
     # normalize
     norm = np.sqrt(state.dag()*state)
     return state/norm
+
+
+def append_bit(bit, spin_list, previous_spin):
+    """
+    Adds bit to chain to create (or not) domain wall.
+    If we encounter a 1 (DW) we need to pu a spin in the opposite orientation of the previous one
+    If we encounter a 0, we put it in the same orientation as the previous one
+    Update previous spin after adding it
+    """
+    if bit == "1":
+        if previous_spin == "0":
+            spin_list.append(ket1)
+            previous_spin = "1"
+        elif previous_spin == "1":
+            spin_list.append(ket0)
+            previous_spin = "0"
+    elif bit == "0":
+        if previous_spin == "0":
+            spin_list.append(ket0)
+            previous_spin = "0"
+        elif previous_spin == "1":
+            spin_list.append(ket1)
+            previous_spin = "1"
+
+    return spin_list, previous_spin
+
+
 
 
 ### STATE GENERATION FOR DIRECT STATES
