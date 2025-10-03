@@ -35,15 +35,15 @@ def create_domain_wall_state(state_dictionary, register, one_step = False):
             excitation_number = term.count("1")
             #if odd, make it even using auxiliary qubit 
             if excitation_number % 2 != 0:
-                term.append("1")
+                term_plus_aux = term + "1"
             else:
-                term.append("0")
+                term_plus_aux = term + "0"
 
         #Invert order if building state in Alice's register (build starting from last qubit, the one touching the chain)
         if register == "Alice":
-            loop_list = term[::-1]
+            loop_list = term_plus_aux[::-1]
         elif register == "Bob":
-            loop_list = term
+            loop_list = term_plus_aux
 
         #loop over bits
         for bit in loop_list:
