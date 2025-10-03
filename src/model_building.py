@@ -84,8 +84,6 @@ def append_bit(bit, spin_list, previous_spin):
     return spin_list, previous_spin
 
 
-
-
 ### STATE GENERATION FOR DIRECT STATES
 
 def create_standard_state(state_dictionary, register):

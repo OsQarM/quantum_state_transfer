@@ -22,13 +22,14 @@ class Hamiltonian:
     def __init__(self, system_size, mode, lambda_factor, register_size=None, global_J=None,
                  j_error = None, z_error = None, l_error = None, correction = 2):
         '''
-        Parameter description
+        Args:
         
-        :system_size:(int) Length of chain
-        :mode:(str) Type of Hamiltonian (standard, forward, backward)
-        :lambda_factor:(float) Global prefactor that controls error and simulation speed
-        :global_J:(float) Domain wall coupling (not needed for standard)
-        :register_size:(int) Size of Bob's register (needed only for backward case)
+        system_size:(int) Length of chain
+        mode:(str) Type of Hamiltonian (standard, forward, backward)
+        lambda_factor:(float) Global prefactor that controls error and simulation speed
+        global_J:(float) Domain wall coupling (not needed for standard)
+        register_size:(int) Size of Bob's register (needed only for backward case)
+        correction: debug parameter to test phase correction
         
         '''
         self.n_spins = system_size

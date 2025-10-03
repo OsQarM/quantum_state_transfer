@@ -67,16 +67,17 @@ def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, perio
 
     result_transport         = time_evolution                (H_transport, initial_chain, ti, period, int(Nstep))
     full_fidelity_transport  = calculate_full_fidelity       (result_transport, final_chain)
-    magnetizations_transport = calculate_expectation_values(result_transport, H_transport)
+    magnetizations_transport = calculate_expectation_values  (result_transport, H_transport)
 
     middle_chain = result_transport.states[-1]
 
     result_reset         = time_evolution                (H_reset, middle_chain, ti, period*factor, int(Nstep*factor)) #Additional time for validation and aesthetics
     full_fidelity_reset  = calculate_full_fidelity       (result_reset, final_chain)
-    magnetizations_reset = calculate_expectation_values(result_reset, H_reset)
+    magnetizations_reset = calculate_expectation_values  (result_reset, H_reset)
 
+    #Merge results
     total_full_fidelity = np.concatenate((full_fidelity_transport, full_fidelity_reset), axis=0)
-    magnetizations      = np.concatenate((magnetizations_transport, magnetizations_reset), axis=0)
+    magnetizations = {key: np.concatenate([magnetizations_transport[key], magnetizations_reset[key]], axis=0) for key in magnetizations_transport}
 
     return total_full_fidelity, magnetizations
 
