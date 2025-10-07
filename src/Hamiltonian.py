@@ -171,7 +171,6 @@ class Hamiltonian:
         #Interaction terms with the rest of the spins except for the last one
         for i in range(0, self.n_spins-1):
             Ham += j_terms[i]*self.sz_list[i]*self.sz_list[i+1]
-            Ham += self.sz_list[i]*self.sz_list[i+1]
         
         #Residual z fields
         for i in range(0,self.n_spins):
