@@ -39,7 +39,7 @@ def chain_calibration(initial_chain, H_transport, ti, tf, Nstep, AutoSwitch = Tr
         #step_of_min_z = max(int(Nstep//2 + np.argmax(magnetizations_calibration[Nstep//2:,-2])),10)
         #step_of_min_z = np.argsort(np.abs(magnetizations_calibration[:,-1]))[1]
 
-    period = (ti - tf)*step_of_min_z/Nstep
+    period = (tf - ti)*step_of_min_z/Nstep
 
     return step_of_min_z, period
 
@@ -82,7 +82,7 @@ def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, perio
     return total_full_fidelity, magnetizations
 
 
-def OneStepAlgorithm(initial_chain, final_chain, H_transport, ti, period, Nstep, factor = 1.0, N = None):
+def OneStepAlgorithm(initial_chain, final_chain, H_transport, H_correction, ti, period, Nstep, factor = 1.0, N = None, correction = False):
     """
     
     Runs the 2-step protocol to achieve quantum transport with domain walls
@@ -103,12 +103,33 @@ def OneStepAlgorithm(initial_chain, final_chain, H_transport, ti, period, Nstep,
 
     # Create DW registers and whole systems for initial and target state
     simulation_result = time_evolution                  (H_transport, initial_chain, ti, period*factor, int(Nstep*factor))
-    full_fidelity     = calculate_full_fidelity_standard(simulation_result, final_chain, N)
+    full_fidelity     = calculate_full_fidelity_standard(simulation_result, final_chain)
     magnetizations    = calculate_expectation_values  (simulation_result, H_transport)
 
-    return full_fidelity, magnetizations
+    if correction == True:
+        corrected_fidelities = calculate_corrections(simulation_result, H_correction, ti, final_chain, Nstep)
+    elif correction == False:
+        corrected_fidelities = full_fidelity
+  
+
+    return full_fidelity, magnetizations, corrected_fidelities
 
 
+def calculate_corrections(simulation, Hamiltonian, ti, target, Nstep):
+    '''
+    Add phase correction to each timestep of the chain evolution 
+    '''
+    corrected_fidelities = []
+    #Get period of oscillations (technically, each step could be evolved under a different time, the one it takes it to reach the maximum, which is deterministic)
+    phase_period = np.pi/Hamiltonian.J
+    #iterate for each state, and evolve under correction hamiltonian (ZZ)
+    for state in simulation.states:
+       corrected_result = time_evolution (Hamiltonian, state, ti, phase_period, Nstep//10)
+       #calculate fidelities and maximums
+       corrected_fidelity = calculate_full_fidelity_standard(corrected_result, target)
+       corrected_fidelities.append(max(corrected_fidelity))
+
+    return corrected_fidelities
 
 def time_evolution(Ham, initial_state, initial_time, final_time, timesteps, progessbar = None):
     '''

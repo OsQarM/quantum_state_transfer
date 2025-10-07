@@ -77,6 +77,8 @@ class Hamiltonian:
             H = self.hamiltonian_transport()
         elif self.mode == "reset":
             H = self.hamiltonian_reset()
+        elif self.mode == "correction":
+            H = self.hamiltonian_correction()
         return H
     
 
@@ -139,7 +141,7 @@ class Hamiltonian:
         #phase correction
         for i in range(self.n_spins):
             #Ham +=  -0.25*self.lambda_factor*(self.n_spins +1) * self.sz_list[i]
-            Ham +=  1*self.lambda_factor*(1*self.n_spins -2)/(4) * self.sz_list[i]
+            Ham +=  1*self.lambda_factor*(1*self.n_spins -1)/(4) * self.sz_list[i]
 
 
         #residual z fields
@@ -168,8 +170,9 @@ class Hamiltonian:
 
         #Interaction terms with the rest of the spins except for the last one
         for i in range(0, self.n_spins-1):
-            Ham += j_terms[i]* self.sz_list[i]*self.sz_list[i+1]
-
+            Ham += j_terms[i]*self.sz_list[i]*self.sz_list[i+1]
+            Ham += self.sz_list[i]*self.sz_list[i+1]
+        
         #Residual z fields
         for i in range(0,self.n_spins):
             Ham += z_terms[i] * self.sz_list[i]
@@ -202,4 +205,17 @@ class Hamiltonian:
         for i in range(0,self.n_spins):
             Ham += z_terms[i] * self.sz_list[i]
 
+        return Ham
+    
+    def hamiltonian_correction(self):
+        '''
+        Build Hamiltonian for correcting relative phase after domain wall evolution
+        '''
+        Ham = 0
+        j_terms = self.couplings["J"]
+
+        #Relative phase correction
+        for i in range(0, self.n_spins-1):
+            Ham += 2*j_terms[1]*self.sz_list[i]*self.sz_list[i+1]
+        
         return Ham
