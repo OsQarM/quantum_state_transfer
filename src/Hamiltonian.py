@@ -215,6 +215,6 @@ class Hamiltonian:
 
         #Relative phase correction
         for i in range(0, self.n_spins-1):
-            Ham += 2*j_terms[1]*self.sz_list[i]*self.sz_list[i+1]
+            Ham += j_terms[1]*self.sz_list[i]*self.sz_list[i+1]
         
         return Ham
