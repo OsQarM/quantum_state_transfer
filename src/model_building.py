@@ -29,23 +29,15 @@ def create_domain_wall_state(state_dictionary, register, one_step = False):
         #first bit of state is always a down wire qubit
         previous_spin = "0"
 
-        #for one-step protocol only
-        if one_step == True:
-            #count number of domain walls
-            excitation_number = term.count("1")
-            #if odd, make it even using auxiliary qubit 
-            if excitation_number % 2 != 0:
-                term_plus_aux = term + "1"
-            else:
-                term_plus_aux = term + "0"
+        #Add auxiliary qubit if necessary
+        term = append_auxiliary_qubit(term, one_step)
 
         #Invert order if building state in Alice's register (build starting from last qubit, the one touching the chain)
         if register == "Alice":
-            loop_list = term_plus_aux[::-1]
+            loop_list = term[::-1]
         elif register == "Bob":
-            loop_list = term_plus_aux
+            loop_list = term
 
-        #loop over bits
         for bit in loop_list:
             #put 0 or 1 to create (or not) domain wall and update previous_spin variable
             dw_spins, previous_spin = append_bit(bit, dw_spins, previous_spin)
@@ -54,9 +46,26 @@ def create_domain_wall_state(state_dictionary, register, one_step = False):
         dw_term = qt.tensor(dw_spins[::-1])
         #add to full state with corresponding weight
         state += state_dictionary[term]*dw_term
+
     # normalize
     norm = np.sqrt(state.dag()*state)
     return state/norm
+
+def append_auxiliary_qubit(state, one_step):
+        #for one-step protocol only
+        if one_step == True:
+            #count number of domain walls
+            excitation_number = state.count("1")
+            #if odd, make it even using auxiliary qubit 
+            if excitation_number % 2 != 0:
+                new_term = state + "1"
+            else:
+                new_term = state + "0"
+        else:
+            # don't do anything to the variable
+            new_term = state
+
+        return new_term
 
 
 def append_bit(bit, spin_list, previous_spin):
@@ -131,7 +140,7 @@ def initialize_general_system(size, dw_state, register):
 
     '''
     #check that initial state is a valid one
-    if abs(1 - abs(dw_state.dag()*dw_state)) > 0.0001:
+    if abs(1 - abs(dw_state.dag()*dw_state)) > 1e-7:
         print("Initial state is not valid")
         return
     
@@ -153,9 +162,9 @@ def initialize_general_system(size, dw_state, register):
     return initial_state
 
 
-def create_DW_initial_and_target(state_dictionary, N):
-    initial_state = create_domain_wall_state(state_dictionary, register='Alice')
-    final_state   = create_domain_wall_state(state_dictionary, register='Bob')
+def create_DW_initial_and_target(state_dictionary, N, one_step = False):
+    initial_state = create_domain_wall_state(state_dictionary, register='Alice', one_step = one_step)
+    final_state   = create_domain_wall_state(state_dictionary, register='Bob', one_step = one_step)
 
     initial_chain = initialize_general_system(N, initial_state, register='Alice')
     final_chain   = initialize_general_system(N, final_state, register='Bob')

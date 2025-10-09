@@ -20,7 +20,7 @@ class Hamiltonian:
         (standard,forward, backward)    
     '''
     def __init__(self, system_size, mode, lambda_factor, register_size=None, global_J=None,
-                 j_error = None, z_error = None, l_error = None, correction = 2):
+                 j_error = None, z_error = None, l_error = None, correction = 0):
         '''
         Args:
         
@@ -140,8 +140,8 @@ class Hamiltonian:
         
         #phase correction
         for i in range(self.n_spins):
-            #Ham +=  -0.25*self.lambda_factor*(self.n_spins +1) * self.sz_list[i]
-            Ham +=  1*self.lambda_factor*(1*self.n_spins -1)/(4) * self.sz_list[i]
+            # - sign important!!
+            Ham +=  -self.lambda_factor*(1*self.n_spins -1)/(4) * self.sz_list[i]
 
 
         #residual z fields

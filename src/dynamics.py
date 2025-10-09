@@ -45,6 +45,26 @@ def chain_calibration(initial_chain, H_transport, ti, tf, Nstep, AutoSwitch = Tr
     return step_of_min_z, period
 
 
+
+def LightweightAlgorithm(initial_chain, final_chain, ti, period, Nstep, H_transport, H_reset = None):
+    '''
+    Version of the transporr protocol where only the last point of fidelity is calculated. Used for loops with 
+    a lot of simulations
+    '''
+    result_transport =  time_evolution(H_transport, initial_chain, ti, period, int(Nstep))
+
+    if H_reset:
+        result_reset = time_evolution (H_reset, result_transport.states[-1], ti, period, int(Nstep))
+        #fidelity = calculate_full_fidelity(result_reset, final_chain)
+        fidelity = qt.fidelity(result_reset.states[-1],final_chain)
+    else:
+        #fidelity = calculate_full_fidelity(result_transport, final_chain)
+        fidelity = qt.fidelity(result_transport.states[-1],final_chain)
+    
+    return fidelity
+
+
+
 def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, period, Nstep, factor = 1.0):
     """
     
@@ -83,7 +103,7 @@ def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, perio
     return total_full_fidelity, magnetizations
 
 
-def OneStepAlgorithm(initial_chain, final_chain, H_transport, H_correction, ti, period, Nstep, factor = 1.0, N = None, correction = None):
+def OneStepAlgorithm(initial_chain, final_chain, H_transport, ti, period, Nstep, factor = 1.0, N = None, correction = None, H_correction= None):
     """
     
     Runs the 2-step protocol to achieve quantum transport with domain walls
@@ -110,6 +130,7 @@ def OneStepAlgorithm(initial_chain, final_chain, H_transport, H_correction, ti, 
     if correction == "Full":
         corrected_fidelities = calculate_corrections(simulation_result.states, H_correction, ti, final_chain, Nstep//10)
 
+    # IN PROGRESS
     #elif correction == "End":
     #    #calculate relative phase of last state
     #    relative_phase, correction_time = find_correction_parameters(H_transport.J, H_transport.lambda_factor)
