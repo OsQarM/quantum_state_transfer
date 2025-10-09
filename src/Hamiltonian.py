@@ -45,7 +45,6 @@ class Hamiltonian:
         self.sx_list, self.sy_list, self.sz_list = self._initialize_operators()
         self.couplings = self._calculate_couplings()
         self.ham = self._build_hamiltonian()
-
     
     def _initialize_operators(self):
         '''Setup operators for individual qubits
@@ -218,3 +217,27 @@ class Hamiltonian:
             Ham += j_terms[1]*self.sz_list[i]*self.sz_list[i+1]
         
         return Ham
+    
+
+
+def build_hamiltonians(N, lmd, J, reg_size, j_err = 0, l_err = 0, z_err = 0):
+
+    H_transport = Hamiltonian(system_size = N,
+                        mode = "transport",
+                        lambda_factor = lmd,
+                        global_J = J,
+                        j_error = j_err,
+                        l_error = l_err,
+                        z_error = z_err
+                        )
+    H_reset     = Hamiltonian(system_size = N,
+                        mode = "reset",
+                        lambda_factor = lmd,
+                        register_size = reg_size,
+                        global_J = J,
+                        j_error = j_err,
+                        l_error = l_err,
+                        z_error = z_err 
+                        )
+
+    return H_transport, H_reset
