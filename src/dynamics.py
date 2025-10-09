@@ -55,13 +55,13 @@ def LightweightAlgorithm(initial_chain, final_chain, ti, period, Nstep, H_transp
 
     if H_reset:
         result_reset = time_evolution (H_reset, result_transport.states[-1], ti, period, int(Nstep))
-        #fidelity = calculate_full_fidelity(result_reset, final_chain)
-        fidelity = qt.fidelity(result_reset.states[-1],final_chain)
+        #fidelity_list = calculate_full_fidelity(result_reset, final_chain)
+        fidelity = qt.fidelity(result_reset.states[-1], final_chain)
     else:
-        #fidelity = calculate_full_fidelity(result_transport, final_chain)
+        #fidelity_list = calculate_full_fidelity(result_transport, final_chain)
         fidelity = qt.fidelity(result_transport.states[-1],final_chain)
     
-    return fidelity
+    return fidelity#, fidelity_list
 
 
 

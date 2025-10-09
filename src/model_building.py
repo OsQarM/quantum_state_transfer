@@ -30,13 +30,13 @@ def create_domain_wall_state(state_dictionary, register, one_step = False):
         previous_spin = "0"
 
         #Add auxiliary qubit if necessary
-        term = append_auxiliary_qubit(term, one_step)
+        aux_term = append_auxiliary_qubit(term, one_step)
 
         #Invert order if building state in Alice's register (build starting from last qubit, the one touching the chain)
         if register == "Alice":
-            loop_list = term[::-1]
+            loop_list = aux_term[::-1]
         elif register == "Bob":
-            loop_list = term
+            loop_list = aux_term
 
         for bit in loop_list:
             #put 0 or 1 to create (or not) domain wall and update previous_spin variable
@@ -181,21 +181,5 @@ def create_ST_initial_and_target(state_dictionary, N):
     final_chain   = initialize_general_system(N, final_state, register='Bob')
     
     return initial_chain, final_chain
-
-def build_hamiltonians(N, lmd, J, reg_size):
-
-    H_transport = Ham.Hamiltonian(system_size = N,
-                        mode = "transport",
-                        lambda_factor = lmd,
-                        global_J = J
-                        )
-    H_reset     = Ham.Hamiltonian(system_size = N,
-                        mode = "reset",
-                        lambda_factor = lmd,
-                        register_size = reg_size,
-                        global_J = J
-                        )
-    
-    return H_transport, H_reset
 
 
