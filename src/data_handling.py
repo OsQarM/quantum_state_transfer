@@ -8,14 +8,32 @@ import datetime
 import re
 import csv
 
+
 def save_numpy_array(fidelity_data, filepath):
     '''
-    Saves curve of fidelity into numpy format in the desided path
-    :fidelity_data:(nparray(float)) Data to save
-    :filepath:(str) Path to save
+    Saves curve of fidelity into numpy format in the desired path
+    :fidelity_data: (nparray(float)) Data to save
+    :filepath: (str) Path to save
     '''
-    np.save(f"{filepath}.npy", fidelity_data)
+    # Ensure filepath has .npy extension
+    if not filepath.endswith('.npy'):
+        filepath = filepath + '.npy'
+    
+    # Create directory if it doesn't exist
+    directory = os.path.dirname(filepath)
+    if directory and not os.path.exists(directory):
+        os.makedirs(directory, exist_ok=True)
+        print(f"Created directory: {directory}")
+    
+    # Check if file already exists
+    if os.path.exists(filepath):
+        raise FileExistsError(f"File '{filepath}' already exists. Operation aborted to prevent overwriting.")
+    
+    # Save the data
+    np.save(filepath, fidelity_data)
+    print(f"Data successfully saved to: {filepath}")
     return
+
 
 
 def fetch_numpy_array(filepath):
