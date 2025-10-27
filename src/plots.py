@@ -448,8 +448,206 @@ def plot_multiple_ratio_trend_slope_2(x_data, y_data_dict, log_scale=True, show_
 ##################################
 ##################################
 
-def extract_peak_evolution(num_steps, fidelity_data, min_peak_height=0.2, smooth_points=200):
-    """Extract peaks with fixed frequency from start until first natural peak."""
+# def extract_peak_evolution(num_steps, fidelity_data, min_peak_height=0.2, smooth_points=200):
+#     """Extract peaks with fixed frequency from start until first natural peak."""
+#     t = np.linspace(0, num_steps-1, num_steps)
+    
+#     # First find all natural peaks that meet height requirement
+#     natural_peaks, _ = find_peaks(fidelity_data, height=min_peak_height)
+#     natural_peak_times = t[natural_peaks]
+#     natural_peak_values = fidelity_data[natural_peaks]
+    
+#     if len(natural_peaks) < 2:
+#         # Not enough peaks to determine frequency - return basic data
+#         return {
+#             't': t,
+#             'y': fidelity_data,
+#             'peak_times': natural_peak_times,
+#             'peak_values': natural_peak_values,
+#             'smooth_t': natural_peak_times,
+#             'smooth_y': natural_peak_values,
+#             'max_fidelity': max(natural_peak_values) if len(natural_peak_values) > 0 else np.nan
+#         }
+    
+#     # Calculate peak frequency in data points
+#     peak_intervals = np.diff(natural_peaks)
+#     points_per_peak = int(round(np.mean(peak_intervals)))
+    
+#     # Determine first natural peak position
+#     first_natural_peak_pos = natural_peaks[0]
+    
+#     # Generate regularly spaced peaks from start until first natural peak
+#     all_peak_positions = []
+    
+#     # Start from first peak and work backwards
+#     current_pos = first_natural_peak_pos
+#     while current_pos >= 0:
+#         all_peak_positions.append(current_pos)
+#         current_pos -= points_per_peak
+    
+#     # Now go forward from start to first natural peak
+#     all_peak_positions = sorted(all_peak_positions)
+#     all_peak_positions = [p for p in all_peak_positions if p <= first_natural_peak_pos]
+    
+#     # Combine with natural peaks (removing duplicates)
+#     combined_peaks = np.unique(np.concatenate([
+#         np.array(all_peak_positions),
+#         natural_peaks
+#     ]))
+    
+#     # Get corresponding times and values
+#     peak_times = t[combined_peaks]
+#     peak_values = fidelity_data[combined_peaks]
+    
+#     # Create smoothed trend
+#     if len(peak_times) > 1:
+#         interp_func = interp1d(peak_times, peak_values, kind='cubic', fill_value='extrapolate')
+#         smooth_t = np.linspace(min(peak_times), max(peak_times), smooth_points)
+#         smooth_y = interp_func(smooth_t)
+#     else:
+#         smooth_t, smooth_y = peak_times, peak_values
+    
+#     return {
+#         't': t,
+#         'y': fidelity_data,
+#         'peak_times': peak_times,
+#         'peak_values': peak_values,
+#         'smooth_t': smooth_t,
+#         'smooth_y': smooth_y,
+#         'max_fidelity': max(peak_values) if len(peak_values) > 0 else np.nan
+#     }
+
+
+# ##################################
+# ##################################
+
+# def plot_three_fidelity_curves(num_steps, fidelity_data_list, labels=None, colors=None, min_peak_height=0.0, filepath = None):
+#     """PhD-quality plot of fidelity trends with peak evolution."""
+    
+#     # Default styling (Nature-style colors)
+#     if labels is None:
+#         labels = ['Set 1', 'Set 2', 'Set 3']
+#     if colors is None:
+#         colors = ['#4E79A7', '#F28E2B', '#59A14F']  # Muted blue, orange, green
+    
+#     fig, ax = plt.subplots(figsize=(8, 5), tight_layout=True, dpi=300)
+    
+#     # First pass to find the time of maximum for the orange line (index 1)
+#     orange_data = extract_peak_evolution(len(fidelity_data_list[1]), fidelity_data_list[1], min_peak_height)
+#     max_time_orange = orange_data['smooth_t'][np.argmax(orange_data['smooth_y'])]
+#     scaling_factor = 2 / (max_time_orange / (num_steps-1))  # This will make max_time_orange correspond to 2
+    
+#     # Process and plot each dataset
+#     for i, fidelity_data in enumerate(fidelity_data_list):
+#         data = extract_peak_evolution(len(fidelity_data), fidelity_data, min_peak_height)
+        
+#         # Rescale time axis so orange maximum is at 2
+#         rescaled_t = data['t'] / (num_steps-1) * scaling_factor
+#         rescaled_peak_times = data['peak_times'] / (num_steps-1) * scaling_factor
+#         rescaled_smooth_t = data['smooth_t'] / (num_steps-1) * scaling_factor
+        
+#         # Original data (very faint)
+#         ax.plot(rescaled_t, data['y'], color=colors[i], alpha=0.3, linewidth=0.8, zorder=1)
+        
+#         # Peaks (no legend entry)
+#         ax.scatter(rescaled_peak_times, data['peak_values'], 
+#                   color=colors[i], s=25, alpha=0.7, zorder=2, 
+#                   edgecolors='k', linewidths=0.3)
+        
+#         # Smoothed trend (with max value in legend)
+#         ax.plot(rescaled_smooth_t, data['smooth_y'], 
+#                color=colors[i], linewidth=2.5, 
+#                label=fr'{labels[i]} ($F_{{\max}} = {data["max_fidelity"]:.3f}$)',
+#                zorder=3)
+    
+#     # Professional formatting with requested modifications
+#     ax.set_xlabel(r'Time ($t/\tau_{\mathrm{transfer}}$)', fontsize=14, labelpad=10)
+#     ax.set_ylabel('Fidelity', fontsize=14, labelpad=10)
+#     ax.tick_params(labelsize=14)
+    
+#     # Legend without peaks
+#     legend = ax.legend(frameon=False, framealpha=1, 
+#                       loc='upper left',
+#                       borderpad=0.8, handlelength=1.5,
+#                       fontsize=12)
+#     legend.get_frame().set_edgecolor('k')
+#     legend.get_frame().set_linewidth(0.5)
+    
+#     # Grid and spines
+#     ax.grid(True, linestyle=':', color='lightgray', alpha=0.7)
+#     for spine in ['top', 'right']:
+#         ax.spines[spine].set_visible(False)
+#     for spine in ['bottom', 'left']:
+#         ax.spines[spine].set_color('k')
+#         ax.spines[spine].set_linewidth(0.7)
+    
+#     ax.set_ylim(-0.05, 1.05)
+#     # Set xlim based on the scaling factor (0 to 2*scaling_factor might not be appropriate)
+#     # Instead, find the maximum time across all datasets after rescaling
+#     max_x = max([max(data['t'] / (num_steps-1)) * scaling_factor for data in 
+#                 [extract_peak_evolution(len(fd), fd, min_peak_height) for fd in fidelity_data_list]])
+#     ax.set_xlim(0, max_x)
+    
+#     # Save as vector graphic for publications
+    
+#     if filepath:        
+#         plt.savefig(f'{filepath}.png', bbox_inches='tight', dpi=300)
+#         plt.savefig(f'{filepath}.pdf', bbox_inches='tight', dpi=300)
+
+#     plt.show()
+#     return 
+
+
+
+"""
+            # Linear regression using numpy
+            coeffs = np.polyfit(x_data, y_data, 1)
+            slope = coeffs[0]
+            intercept = coeffs[1]
+            trend_line = np.poly1d(coeffs)
+            y_trend = trend_line(x_data)
+            
+            # Plot trend line with matching color but dashed
+            ax.plot(x_data, y_trend, '--', linewidth=1.5, color=color, alpha=0.8)
+            
+            # Use the actual data line handle for legend, but with slope in label
+            legend_handles.append(line)
+            legend_labels.append(f'{curve_name} (α = {slope:.3f})')
+        else:
+            # If no trend lines, just use curve name
+            legend_handles.append(line)
+            legend_labels.append(curve_name)
+"""
+
+
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import find_peaks
+from scipy.interpolate import interp1d
+
+def extract_peak_evolution(num_steps, fidelity_data, min_peak_height=0.2, smooth_points=200, 
+                          min_peak_frequency=0.05, marker_frequency=10):
+    """
+    Extract peaks with fixed frequency from start until first natural peak.
+    
+    Parameters:
+    -----------
+    num_steps : int
+        Number of time steps
+    fidelity_data : array-like
+        Fidelity values over time
+    min_peak_height : float
+        Minimum height for natural peaks to be considered
+    smooth_points : int
+        Number of points for smoothed interpolation
+    min_peak_frequency : float
+        Minimum peak frequency threshold (peaks per time step) to use interpolation.
+        If actual frequency is lower, fall back to marker-based approach.
+    marker_frequency : int
+        Frequency of markers (every N points) when falling back to marker-based approach
+    """
     t = np.linspace(0, num_steps-1, num_steps)
     
     # First find all natural peaks that meet height requirement
@@ -458,21 +656,65 @@ def extract_peak_evolution(num_steps, fidelity_data, min_peak_height=0.2, smooth
     natural_peak_values = fidelity_data[natural_peaks]
     
     if len(natural_peaks) < 2:
-        # Not enough peaks to determine frequency - return basic data
+        # Not enough peaks to determine frequency - use marker-based approach
+        marker_positions = np.arange(0, num_steps, marker_frequency)
+        if len(marker_positions) == 0:  # Handle very short sequences
+            marker_positions = np.array([0])
+        
+        peak_times = t[marker_positions]
+        peak_values = fidelity_data[marker_positions]
+        
+        # For smoothing with few points, use linear interpolation
+        if len(peak_times) > 1:
+            interp_func = interp1d(peak_times, peak_values, kind='linear', fill_value='extrapolate')
+            smooth_t = np.linspace(min(peak_times), max(peak_times), smooth_points)
+            smooth_y = interp_func(smooth_t)
+        else:
+            smooth_t, smooth_y = peak_times, peak_values
+        
         return {
             't': t,
             'y': fidelity_data,
-            'peak_times': natural_peak_times,
-            'peak_values': natural_peak_values,
-            'smooth_t': natural_peak_times,
-            'smooth_y': natural_peak_values,
-            'max_fidelity': max(natural_peak_values) if len(natural_peak_values) > 0 else np.nan
+            'peak_times': peak_times,
+            'peak_values': peak_values,
+            'smooth_t': smooth_t,
+            'smooth_y': smooth_y,
+            'max_fidelity': max(peak_values) if len(peak_values) > 0 else np.nan,
+            'method': 'markers'  # Track which method was used
         }
     
     # Calculate peak frequency in data points
     peak_intervals = np.diff(natural_peaks)
     points_per_peak = int(round(np.mean(peak_intervals)))
+    actual_frequency = 1.0 / points_per_peak if points_per_peak > 0 else 0
     
+    # Check if peak frequency is too low
+    if actual_frequency < min_peak_frequency:
+        # Fall back to marker-based approach
+        marker_positions = np.arange(0, num_steps, marker_frequency)
+        peak_times = t[marker_positions]
+        peak_values = fidelity_data[marker_positions]
+        
+        # Use linear interpolation for low-frequency data
+        if len(peak_times) > 1:
+            interp_func = interp1d(peak_times, peak_values, kind='linear', fill_value='extrapolate')
+            smooth_t = np.linspace(min(peak_times), max(peak_times), smooth_points)
+            smooth_y = interp_func(smooth_t)
+        else:
+            smooth_t, smooth_y = peak_times, peak_values
+        
+        return {
+            't': t,
+            'y': fidelity_data,
+            'peak_times': peak_times,
+            'peak_values': peak_values,
+            'smooth_t': smooth_t,
+            'smooth_y': smooth_y,
+            'max_fidelity': max(peak_values) if len(peak_values) > 0 else np.nan,
+            'method': 'markers'
+        }
+    
+    # Original interpolation method for high-frequency peaks
     # Determine first natural peak position
     first_natural_peak_pos = natural_peaks[0]
     
@@ -514,14 +756,14 @@ def extract_peak_evolution(num_steps, fidelity_data, min_peak_height=0.2, smooth
         'peak_values': peak_values,
         'smooth_t': smooth_t,
         'smooth_y': smooth_y,
-        'max_fidelity': max(peak_values) if len(peak_values) > 0 else np.nan
+        'max_fidelity': max(peak_values) if len(peak_values) > 0 else np.nan,
+        'method': 'interpolation'
     }
 
 
-##################################
-##################################
-
-def plot_three_fidelity_curves(num_steps, fidelity_data_list, labels=None, colors=None, min_peak_height=0.0, filepath = None):
+def plot_three_fidelity_curves(num_steps, fidelity_data_list, labels=None, colors=None, 
+                              min_peak_height=0.0, filepath=None, min_peak_frequency=0.05, 
+                              marker_frequency=10):
     """PhD-quality plot of fidelity trends with peak evolution."""
     
     # Default styling (Nature-style colors)
@@ -533,13 +775,17 @@ def plot_three_fidelity_curves(num_steps, fidelity_data_list, labels=None, color
     fig, ax = plt.subplots(figsize=(8, 5), tight_layout=True, dpi=300)
     
     # First pass to find the time of maximum for the orange line (index 1)
-    orange_data = extract_peak_evolution(len(fidelity_data_list[1]), fidelity_data_list[1], min_peak_height)
+    orange_data = extract_peak_evolution(len(fidelity_data_list[1]), fidelity_data_list[1], 
+                                        min_peak_height, min_peak_frequency=min_peak_frequency,
+                                        marker_frequency=marker_frequency)
     max_time_orange = orange_data['smooth_t'][np.argmax(orange_data['smooth_y'])]
     scaling_factor = 2 / (max_time_orange / (num_steps-1))  # This will make max_time_orange correspond to 2
     
     # Process and plot each dataset
     for i, fidelity_data in enumerate(fidelity_data_list):
-        data = extract_peak_evolution(len(fidelity_data), fidelity_data, min_peak_height)
+        data = extract_peak_evolution(len(fidelity_data), fidelity_data, min_peak_height,
+                                     min_peak_frequency=min_peak_frequency,
+                                     marker_frequency=marker_frequency)
         
         # Rescale time axis so orange maximum is at 2
         rescaled_t = data['t'] / (num_steps-1) * scaling_factor
@@ -549,10 +795,17 @@ def plot_three_fidelity_curves(num_steps, fidelity_data_list, labels=None, color
         # Original data (very faint)
         ax.plot(rescaled_t, data['y'], color=colors[i], alpha=0.3, linewidth=0.8, zorder=1)
         
-        # Peaks (no legend entry)
+        # Peaks (no legend entry) - adjust marker style based on method
+        if data.get('method') == 'markers':
+            marker_style = 'o'  # Square markers for fallback method
+            marker_size = 25
+        else:
+            marker_style = 'o'  # Circle markers for interpolation method
+            marker_size = 25
+            
         ax.scatter(rescaled_peak_times, data['peak_values'], 
-                  color=colors[i], s=25, alpha=0.7, zorder=2, 
-                  edgecolors='k', linewidths=0.3)
+                  color=colors[i], s=marker_size, alpha=0.7, zorder=2, 
+                  edgecolors='k', linewidths=0.3, marker=marker_style)
         
         # Smoothed trend (with max value in legend)
         ax.plot(rescaled_smooth_t, data['smooth_y'], 
@@ -582,39 +835,18 @@ def plot_three_fidelity_curves(num_steps, fidelity_data_list, labels=None, color
         ax.spines[spine].set_linewidth(0.7)
     
     ax.set_ylim(-0.05, 1.05)
-    # Set xlim based on the scaling factor (0 to 2*scaling_factor might not be appropriate)
-    # Instead, find the maximum time across all datasets after rescaling
+    # Set xlim based on the scaling factor
     max_x = max([max(data['t'] / (num_steps-1)) * scaling_factor for data in 
-                [extract_peak_evolution(len(fd), fd, min_peak_height) for fd in fidelity_data_list]])
+                [extract_peak_evolution(len(fd), fd, min_peak_height, 
+                                       min_peak_frequency=min_peak_frequency,
+                                       marker_frequency=marker_frequency) 
+                 for fd in fidelity_data_list]])
     ax.set_xlim(0, max_x)
     
     # Save as vector graphic for publications
-    
     if filepath:        
         plt.savefig(f'{filepath}.png', bbox_inches='tight', dpi=300)
         plt.savefig(f'{filepath}.pdf', bbox_inches='tight', dpi=300)
 
     plt.show()
-    return 
-
-
-
-"""
-            # Linear regression using numpy
-            coeffs = np.polyfit(x_data, y_data, 1)
-            slope = coeffs[0]
-            intercept = coeffs[1]
-            trend_line = np.poly1d(coeffs)
-            y_trend = trend_line(x_data)
-            
-            # Plot trend line with matching color but dashed
-            ax.plot(x_data, y_trend, '--', linewidth=1.5, color=color, alpha=0.8)
-            
-            # Use the actual data line handle for legend, but with slope in label
-            legend_handles.append(line)
-            legend_labels.append(f'{curve_name} (α = {slope:.3f})')
-        else:
-            # If no trend lines, just use curve name
-            legend_handles.append(line)
-            legend_labels.append(curve_name)
-"""
+    return
