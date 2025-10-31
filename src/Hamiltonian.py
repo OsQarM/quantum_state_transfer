@@ -137,10 +137,16 @@ class Hamiltonian:
             Ham += 0.5 * l_terms[i] * self.sx_list[i] * self.sx_list[i + 1]
             Ham += 0.5 * l_terms[i] * self.sy_list[i] * self.sy_list[i + 1]
         
-        #phase correction
+        #phase correction (for 1 and 0 excitation subspaces)
         for i in range(self.n_spins):
             # - sign important!!
-            Ham +=  -self.lambda_factor*(1*self.n_spins -1)/(4) * self.sz_list[i]
+            Ham += -self.lambda_factor*(1*self.n_spins -2)/(4) * self.sz_list[i]
+
+        #All-to-all phase correction
+        # h2 = - self.lambda_factor / 4.0
+        # for i in range(self.n_spins):
+        #     for j in range(i + 1, self.n_spins):
+        #         Ham += h2 * self.sz_list[i] * self.sz_list[j]
 
 
         #residual z fields

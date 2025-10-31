@@ -5,6 +5,7 @@ import numpy as np
 #peak analysis
 from scipy.signal import find_peaks
 from scipy.interpolate import interp1d
+import os
 
 def plot_fidelity(fidelity_data, N, filepath=None):
     plt.figure(figsize=(8, 6), dpi=300)
@@ -850,3 +851,100 @@ def plot_three_fidelity_curves(num_steps, fidelity_data_list, labels=None, color
 
     plt.show()
     return
+
+
+import matplotlib.pyplot as plt
+
+def plot_fidelity_vs_error(errors, fidelity_means, fidelity_errors, 
+                           title='Fidelity vs Z perturbation', 
+                           xlabel='Z strength (MHz)',
+                           panel_label=None,
+                           save_figure=False, 
+                           save_path=None,
+                           error_type=None,
+                           file_tag=''):
+    """
+    Plot fidelity vs Z error with professional formatting.
+    
+    Parameters:
+    -----------
+    errors : list
+        List of Z error values
+    fidelity_means : list
+        List of fidelity mean values
+    fidelity_errors : list
+        List of fidelity error values
+    title : str, optional
+        Plot title (default: 'Fidelity vs Z perturbation')
+    xlabel : str, optional
+        X-axis label (default: 'Z strength (MHz)')
+    panel_label : str, optional
+        label to enumerate plot (e.g. (a), (2), (iii))
+    save_figure : bool, optional
+        Whether to save the figure (default: False)
+    save_path : str, optional
+        Path to save the figure (required if save_figure=True)
+    file_tag : str, optional
+        Additional tag for filename
+    """
+    # Set up professional styling
+    plt.rcParams['font.family'] = 'serif'
+    plt.rcParams['mathtext.fontset'] = 'dejavuserif'
+
+    # Create figure with high quality settings
+    fig, ax = plt.subplots(figsize=(8, 6), dpi=300, constrained_layout=True)
+    
+    if error_type == 'z':
+        # Scale z errors to MHz
+        error_scaled = [i * 1000 for i in errors]
+    else:
+        error_scaled = [i * 100 for i in errors]
+    
+    # Create errorbar plot with enhanced styling
+    errorbar = ax.errorbar(error_scaled, fidelity_means, yerr=fidelity_errors,
+                         fmt='o-', color='#1f77b4', ecolor='#d62728', capsize=4,
+                         markersize=6, markeredgecolor='k', markeredgewidth=0.5,
+                         linewidth=2, label='Fidelity')
+
+    # --- Professional Styling ---
+    # Axis labels
+    ax.set_xlabel(xlabel, fontsize=15, labelpad=10)
+    ax.set_ylabel('Fidelity', fontsize=15, labelpad=10)
+
+    # Title
+    ax.set_title(title, fontsize=16, pad=12)
+
+    if panel_label:
+        # Add panel label in top-left corner
+        ax.text(0.02, 0.98, panel_label, transform=ax.transAxes, 
+                fontsize=14, va='top', ha='left')
+
+    # Grid and tick styling
+    ax.grid(True, which='both', linestyle=':', linewidth=0.7, alpha=0.5)
+    ax.tick_params(axis='both', which='major', labelsize=14)
+    ax.tick_params(axis='both', which='minor', labelsize=12)
+
+    # Axis limits and scaling
+    ax.set_ylim(0.80, 1.00)
+    ax.set_xlim(0, max(error_scaled)*1.01)
+
+    # Spine styling - remove top/right, adjust others
+    for spine in ['top', 'right']:
+        ax.spines[spine].set_visible(False)
+    for spine in ['bottom', 'left']:
+        ax.spines[spine].set_linewidth(0.8)
+        ax.spines[spine].set_color('black')
+
+    # Save figure if requested
+    if save_figure:
+        if save_path is None:
+            raise ValueError("save_path must be provided when save_figure=True")
+        directory = save_path
+        if directory and not os.path.exists(directory):
+            os.makedirs(directory, exist_ok=True)
+            print(f"Created directory: {directory}")
+        
+        figure_filename = f"{save_path}/{file_tag}"
+        plt.savefig(f"{figure_filename}.pdf", format='pdf', bbox_inches='tight', dpi=300)
+
+    plt.show()

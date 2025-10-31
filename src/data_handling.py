@@ -50,6 +50,92 @@ def fetch_numpy_array(filepath):
     return loaded_array
 
 
+
+def save_three_arrays(array1, array2, array3, filepath, description=None):
+    '''
+    Saves three numpy arrays together into a single .npz file
+    
+    Parameters:
+    -----------
+    array1 : np.array
+        First array to save
+    array2 : np.array
+        Second array to save  
+    array3 : np.array
+        Third array to save
+    filepath : str
+        Path to save the file
+    description : str, optional
+        Optional description of the data being saved
+    '''
+    # Ensure filepath has .npz extension
+    if not filepath.endswith('.npz'):
+        filepath = filepath + '.npz'
+    
+    # Create directory if it doesn't exist
+    directory = os.path.dirname(filepath)
+    if directory and not os.path.exists(directory):
+        os.makedirs(directory, exist_ok=True)
+        print(f"Created directory: {directory}")
+    
+    # Check if file already exists
+    if os.path.exists(filepath):
+        raise FileExistsError(f"File '{filepath}' already exists. Operation aborted to prevent overwriting.")
+    
+    # Save all three arrays together
+    np.savez(filepath, array1=array1, array2=array2, array3=array3)
+    
+    # Optional: save metadata if description provided
+    if description:
+        metadata_file = filepath.replace('.npz', '_metadata.txt')
+        with open(metadata_file, 'w') as f:
+            f.write(f"Description: {description}\n")
+            f.write(f"Array1 shape: {array1.shape}, dtype: {array1.dtype}\n")
+            f.write(f"Array2 shape: {array2.shape}, dtype: {array2.dtype}\n") 
+            f.write(f"Array3 shape: {array3.shape}, dtype: {array3.dtype}\n")
+            f.write(f"Saved on: {np.datetime64('now')}\n")
+    
+    print(f"Three arrays successfully saved to: {filepath}")
+    if description:
+        print(f"Metadata saved to: {metadata_file}")
+    return
+
+
+def fetch_three_arrays(filepath):
+    '''
+    Retrieves three previously stored arrays from a .npz file
+    
+    Parameters:
+    -----------
+    filepath : str
+        Path to the .npz file (with or without extension)
+    
+    Returns:
+    --------
+    tuple : (array1, array2, array3) - The three loaded arrays
+    '''
+    # Add .npz extension if not present
+    if not filepath.endswith('.npz'):
+        filepath = filepath + '.npz'
+    
+    if not os.path.exists(filepath):
+        raise FileNotFoundError(f"File '{filepath}' not found.")
+    
+    # Load the data
+    data = np.load(filepath)
+    
+    # Extract the three arrays
+    array1 = data['array1']
+    array2 = data['array2'] 
+    array3 = data['array3']
+    
+    print(f"Successfully loaded three arrays from: {filepath}")
+    print(f"Array shapes: {array1.shape}, {array2.shape}, {array3.shape}")
+    
+    return array1, array2, array3
+
+
+
 def read_plot_data_from_csv(filepath):
     """Reads x and y data from a CSV file into two separate lists.
     
@@ -74,6 +160,9 @@ def read_plot_data_from_csv(filepath):
     filename_without_ext = os.path.splitext(filename)[0]  # Remove the extension
     
     return x_data, y_data, filename_without_ext
+
+
+
 
 
 def save_plot_data_to_csv(x_data, y_data, filepath, headers=None):
