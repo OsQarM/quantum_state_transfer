@@ -1,0 +1,40 @@
+# config.yaml
+
+sources: "/Users/omichel/Desktop/qilimanjaro/projects/quantum_transport/quantum_state_transfer/src"
+
+experiment:
+  name: "error_analysis_j"
+  description: "J error analysis for N=8 system"
+  output_dir: "../../files"
+  run_simulation: true  # Set to false to only plot existing data
+  
+system:
+  N: 8
+  lambda: 0.02272
+  J: 0.5
+  state_dictionary: {"1": 1}
+  
+simulation:
+  ti: 0
+  Nsteps: 500
+  Nshots: 10
+  
+errors:
+  j_error_range:
+    lower: 0.001
+    upper: 0.01
+    num_points: 10
+  l_error_range:
+    lower: 0.01
+    upper: 0.1
+    num_points: 10
+  z_error_range:
+    lower: 0.001
+    upper: 0.01
+    num_points: 10
+  error_type: "j"  # "j", "l", or "z"
+  
+plotting:
+  title: "Fidelity vs. $\lambda$ error"
+  xlabel: "Relative error (%)"
+  save_figures: true
