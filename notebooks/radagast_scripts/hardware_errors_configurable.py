@@ -61,35 +61,8 @@ def get_data_filename(config, error_list):
     output_dir = config['experiment']['output_dir']
     return f"{output_dir}/errors/{error_type}_err_N{N}_{num_points}_points_{Nshots}_shots"
 
-############################## HELPER FUNCTIONS
+############################## SPECIFIC FUNCTIONS
 
-def initialize_system(state_dictionary, N):
-    initial_state = md.create_domain_wall_state(state_dictionary, register='Alice', one_step=True)
-    final_state   = md.create_domain_wall_state(state_dictionary, register='Bob', one_step=True)
-
-    initial_chain = md.initialize_general_system(N, initial_state, register='Alice')
-    final_chain   = md.initialize_general_system(N, final_state, register='Bob')
-
-    register_size = len(initial_state.dims[0])
-    
-    return initial_chain, final_chain, register_size
-
-def build_hamiltonians(N, lmd, J, reg_size):
-    H_transport = Ham.Hamiltonian(
-        system_size=N,
-        mode="transport",
-        lambda_factor=lmd,
-        global_J=J
-    )
-    H_reset = Ham.Hamiltonian(
-        system_size=N,
-        mode="reset", 
-        lambda_factor=lmd,
-        register_size=reg_size,
-        global_J=J
-    )
-    
-    return H_transport, H_reset
 
 def select_error(err, error_type):
     if error_type == "j":
@@ -153,7 +126,7 @@ def run_simulation(config):
     
     # Initialize system
     global initial_system, final_system
-    initial_system, final_system, register_size = initialize_system(state_dict, N)
+    initial_system, final_system, register_size = md.initialize_system(state_dict, N, one_step = True)
     
     # Run simulation
     print(f"Running {Nshots} shots for {len(error_list)} error values...")

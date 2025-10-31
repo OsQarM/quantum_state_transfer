@@ -35,6 +35,6 @@ errors:
   error_type: "j"  # "j", "l", or "z"
   
 plotting:
-  title: "Fidelity vs. $\lambda$ error"
+  title: "Fidelity vs. J error"
   xlabel: "Relative error (%)"
   save_figures: true

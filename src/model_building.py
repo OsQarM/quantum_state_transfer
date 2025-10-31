@@ -183,3 +183,16 @@ def create_ST_initial_and_target(state_dictionary, N):
     return initial_chain, final_chain
 
 
+
+def initialize_system(state_dictionary, N, one_step = False):
+    initial_state = create_domain_wall_state(state_dictionary, register='Alice', one_step=one_step)
+    final_state   = create_domain_wall_state(state_dictionary, register='Bob', one_step=one_step)
+
+    initial_chain = initialize_general_system(N, initial_state, register='Alice')
+    final_chain   = initialize_general_system(N, final_state, register='Bob')
+
+    register_size = len(initial_state.dims[0])
+    
+    return initial_chain, final_chain, register_size
+
+
