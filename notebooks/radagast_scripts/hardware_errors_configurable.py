@@ -92,7 +92,7 @@ def error_loop(N, lmd, J, ti, tf, Nsteps, Nshots, error_list, error_type, regist
                 l_error=l_err, 
                 z_error=z_err
             )
-            
+
             fidelities.append(dyn.LightweightAlgorithm(initial_system, final_system, ti, tf, Nsteps, H_t))
         
         fmean, ferror = calculate_result_statistics(fidelities)
@@ -172,13 +172,9 @@ def load_and_plot(config):
 
 ############################## MAIN PROGRAM
 
-def main(config_path):
+def main(config):
     # Load configuration
-    config = load_config(config_path)
     exp_name = config['experiment']['name']
-    import_path = config['sources']
-
-    import_files(import_path)
     
     print(f"Experiment: {exp_name}")
     print(f"Description: {config['experiment']['description']}")
@@ -206,9 +202,18 @@ def main(config_path):
 
 if __name__ == "__main__":
     # You can pass config file as command line argument or use default
-    if len(sys.argv) > 1:
-        config_file = sys.argv[1]
-    else:
-        config_file = "config.yaml"
+    config_file = "../config/error_config_radagast.yaml"
+
+    config = load_config(config_file)
+    import_path = config['sources']
+
+
+    sys.path.append(f'{import_path}')
+    import model_building as md
+    import Hamiltonian as Ham
+    import dynamics as dyn
+    import data_handling as dh
+    import plots as plots
+
     
-    main(config_file)
+    main(config)

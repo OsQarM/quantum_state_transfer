@@ -5,8 +5,8 @@ sources: "/Users/omichel/Desktop/qilimanjaro/projects/quantum_transport/quantum_
 experiment:
   name: "error_analysis_j"
   description: "J error analysis for N=8 system"
-  output_dir: "../../files"
-  run_simulation: true  # Set to false to only plot existing data
+  output_dir: "../../error_files"
+  run_simulation: true # Set to false to only plot existing data
   
 system:
   N: 8
@@ -17,7 +17,7 @@ system:
 simulation:
   ti: 0
   Nsteps: 500
-  Nshots: 10
+  Nshots: 5
   
 errors:
   j_error_range:
@@ -32,9 +32,9 @@ errors:
     lower: 0.001
     upper: 0.01
     num_points: 10
-  error_type: "j"  # "j", "l", or "z"
+  error_type: "l"  # "j", "l", or "z"
   
 plotting:
-  title: "Fidelity vs. J error"
+  title: "Fidelity vs. Lambda error"
   xlabel: "Relative error (%)"
   save_figures: true

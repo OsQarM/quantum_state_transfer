@@ -946,5 +946,6 @@ def plot_fidelity_vs_error(errors, fidelity_means, fidelity_errors,
         
         figure_filename = f"{save_path}/{file_tag}"
         plt.savefig(f"{figure_filename}.pdf", format='pdf', bbox_inches='tight', dpi=300)
+        plt.savefig(f'{figure_filename}.png', format='png', bbox_inches='tight', dpi=300)
 
     plt.show()
