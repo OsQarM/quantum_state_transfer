@@ -853,8 +853,6 @@ def plot_three_fidelity_curves(num_steps, fidelity_data_list, labels=None, color
     return
 
 
-import matplotlib.pyplot as plt
-
 def plot_fidelity_vs_error(errors, fidelity_means, fidelity_errors, 
                            title='Fidelity vs Z perturbation', 
                            xlabel='Z strength (MHz)',
@@ -893,8 +891,7 @@ def plot_fidelity_vs_error(errors, fidelity_means, fidelity_errors,
 
     # Create figure with high quality settings
     fig, ax = plt.subplots(figsize=(8, 6), dpi=300, constrained_layout=True)
-    
-    if error_type == 'z':
+    if error_type=='z':
         # Scale z errors to MHz
         error_scaled = [i * 1000 for i in errors]
     else:
