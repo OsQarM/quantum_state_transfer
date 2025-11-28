@@ -65,7 +65,7 @@ def LightweightAlgorithm(initial_chain, final_chain, ti, period, Nstep, H_transp
 
 
 
-def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, period, Nstep, factor = 1.0):
+def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, period, Nstep, dephasing_rates = None, factor = 1.0):
     """
     
     Runs the 2-step protocol to achieve quantum transport with domain walls
@@ -86,13 +86,13 @@ def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, perio
 
     """
 
-    result_transport         = time_evolution                (H_transport, initial_chain, ti, period, int(Nstep))
+    result_transport         = time_evolution                (H_transport, initial_chain, ti, period, int(Nstep), dephasing_rates)
     full_fidelity_transport  = calculate_full_fidelity       (result_transport, final_chain)
     magnetizations_transport = calculate_expectation_values  (result_transport, H_transport)
 
     middle_chain = result_transport.states[-1]
 
-    result_reset         = time_evolution                (H_reset, middle_chain, ti, period*factor, int(Nstep*factor)) #Additional time for validation and aesthetics
+    result_reset         = time_evolution                (H_reset, middle_chain, ti, period*factor, int(Nstep*factor), dephasing_rates) #Additional time for validation and aesthetics
     full_fidelity_reset  = calculate_full_fidelity       (result_reset, final_chain)
     magnetizations_reset = calculate_expectation_values  (result_reset, H_reset)
 
@@ -103,7 +103,7 @@ def TwoStepAlgorithm(initial_chain, final_chain, H_transport, H_reset, ti, perio
     return total_full_fidelity, magnetizations
 
 
-def OneStepAlgorithm(initial_chain, final_chain, H_transport, ti, period, Nstep, factor = 1.0, N = None, correction = None, H_correction= None):
+def OneStepAlgorithm(initial_chain, final_chain, H_transport, ti, period, Nstep, dephasing_rates = None, factor = 1.0, N = None, correction = None, H_correction= None):
     """
     
     Runs the 2-step protocol to achieve quantum transport with domain walls
@@ -123,7 +123,7 @@ def OneStepAlgorithm(initial_chain, final_chain, H_transport, ti, period, Nstep,
     """
 
     # Create DW registers and whole systems for initial and target state
-    simulation_result = time_evolution                  (H_transport, initial_chain, ti, period*factor, int(Nstep*factor))
+    simulation_result = time_evolution                  (H_transport, initial_chain, ti, period*factor, int(Nstep*factor), dephasing_rates)
     full_fidelity     = calculate_full_fidelity_standard(simulation_result, final_chain)
     magnetizations    = calculate_expectation_values  (simulation_result, H_transport)
 
@@ -169,7 +169,7 @@ def calculate_corrections(simulation, Hamiltonian, ti, target, Nstep):
 
     return corrected_fidelities
 
-def time_evolution(Ham, initial_state, initial_time, final_time, timesteps, progessbar = None):
+def time_evolution(Ham, initial_state, initial_time, final_time, timesteps, dephasing_rates = None, progessbar = None):
     '''
     Simulation of transport protocol
 
@@ -180,6 +180,13 @@ def time_evolution(Ham, initial_state, initial_time, final_time, timesteps, prog
     '''
     hamiltonian_object = Ham.ham
     times = np.linspace(initial_time, final_time, timesteps)
+
+    dephasing_ops = []
+
+    if dephasing_rates:
+        for index, gamma in enumerate(dephasing_rates):
+            dephasing_ops.append(np.sqrt(gamma)*Ham.sz_list[index])
+
     #apply hamiltonian to initial state and don't track any observables
 
     options = {'method': 'adams'}
@@ -189,7 +196,11 @@ def time_evolution(Ham, initial_state, initial_time, final_time, timesteps, prog
         'method': 'adams', 
         'progress_bar': 'tqdm'
         }
-    simulation_results = qt.sesolve(hamiltonian_object, initial_state, times, options = options)
+
+    if dephasing_rates:
+        simulation_results = qt.mesolve(hamiltonian_object, initial_state, times, dephasing_ops, [], options = options)
+    else:
+        simulation_results = qt.sesolve(hamiltonian_object, initial_state, times, options = options)
 
     return simulation_results
 

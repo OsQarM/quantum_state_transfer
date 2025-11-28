@@ -140,7 +140,7 @@ class Hamiltonian:
         #phase correction (for 1 and 0 excitation subspaces)
         for i in range(self.n_spins):
             # - sign important!!
-            Ham += -self.lambda_factor*(1*self.n_spins -2)/(4) * self.sz_list[i]
+            Ham += self.lambda_factor*(1*self.n_spins -0)/(4) * self.sz_list[i]
 
         #All-to-all phase correction
         # h2 = - self.lambda_factor / 4.0

@@ -52,6 +52,9 @@ def create_domain_wall_state(state_dictionary, register, one_step = False):
     return state/norm
 
 def append_auxiliary_qubit(state, one_step):
+        '''
+        Add an extra qubit to the spin picture state if we do the one-step protocol
+        '''
         #for one-step protocol only
         if one_step == True:
             #count number of domain walls
@@ -162,31 +165,18 @@ def initialize_general_system(size, dw_state, register):
     return initial_state
 
 
-def create_DW_initial_and_target(state_dictionary, N, one_step = False):
-    initial_state = create_domain_wall_state(state_dictionary, register='Alice', one_step = one_step)
-    final_state   = create_domain_wall_state(state_dictionary, register='Bob', one_step = one_step)
-
-    initial_chain = initialize_general_system(N, initial_state, register='Alice')
-    final_chain   = initialize_general_system(N, final_state, register='Bob')
-
-    register_size = len(initial_state.dims[0])
-    
-    return initial_chain, final_chain, register_size
-
-def create_ST_initial_and_target(state_dictionary, N):
-    initial_state = create_standard_state(state_dictionary, register='Alice')
-    final_state   = create_standard_state(state_dictionary, register='Bob')
-
-    initial_chain = initialize_general_system(N, initial_state, register='Alice')
-    final_chain   = initialize_general_system(N, final_state, register='Bob')
-    
-    return initial_chain, final_chain
 
 
+def initialize_system(state_dictionary, N, encoding = 'dw', one_step = False):
+    if encoding == 'dw':
+        initial_state = create_domain_wall_state(state_dictionary, register='Alice', one_step=one_step)
+        final_state   = create_domain_wall_state(state_dictionary, register='Bob', one_step=one_step)
+    elif encoding == 'st':
+        initial_state = create_standard_state(state_dictionary, register='Alice')
+        final_state   = create_standard_state(state_dictionary, register='Bob')
+    else:
+        raise(ValueError('Encoding not properly defined. Pass either dw (domain wall) or st (standard)'))
 
-def initialize_system(state_dictionary, N, one_step = False):
-    initial_state = create_domain_wall_state(state_dictionary, register='Alice', one_step=one_step)
-    final_state   = create_domain_wall_state(state_dictionary, register='Bob', one_step=one_step)
 
     initial_chain = initialize_general_system(N, initial_state, register='Alice')
     final_chain   = initialize_general_system(N, final_state, register='Bob')
