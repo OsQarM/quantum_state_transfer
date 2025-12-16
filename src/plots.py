@@ -402,7 +402,7 @@ def plot_multiple_ratio_trend_slope_2(x_data, y_data_dict, log_scale=True, show_
     
     # Axis labels with requested font sizes
     ax.set_xlabel(r'$J/\lambda$', fontsize=15, labelpad=10)
-    ax.set_ylabel('$1 - F$', fontsize=15, labelpad=10)
+    ax.set_ylabel(r'$1 - \mathcal{F}$', fontsize=15, labelpad=10)
     
     # Title with requested font size
     ax.set_title('Error vs. Ratio $J/\lambda$', fontsize=16, pad=12)
