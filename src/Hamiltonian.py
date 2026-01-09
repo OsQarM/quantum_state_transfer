@@ -20,7 +20,7 @@ class Hamiltonian:
         (standard,forward, backward)    
     '''
     def __init__(self, system_size, mode, lambda_factor, register_size=None, global_J=None,
-                 j_error = None, z_error = None, l_error = None, correction = 0):
+                 j_error = None, z_error = None, l_error = None, correction = None):
         '''
         Args:
         
@@ -81,7 +81,7 @@ class Hamiltonian:
         return H
     
 
-    def _calculate_couplings(self):
+    def _calculate_couplings(self): 
         """
         Calculate couplings for lambda, J and z fields for different situations (standard or domain walls)
         If errors are zeros we avoid calling the errors.py script
@@ -138,9 +138,10 @@ class Hamiltonian:
             Ham += 0.5 * l_terms[i] * self.sy_list[i] * self.sy_list[i + 1]
         
         #phase correction (for 1 and 0 excitation subspaces)
-        for i in range(self.n_spins):
-            # - sign important!!
-            Ham += self.lambda_factor*(1*self.n_spins -0)/(4) * self.sz_list[i]
+        if self.correction == True:
+            for i in range(self.n_spins):
+                # - sign important!!
+                Ham += 0-self.lambda_factor*(1*self.n_spins)/(4) * self.sz_list[i]
 
         #All-to-all phase correction
         # h2 = - self.lambda_factor / 4.0
@@ -166,16 +167,21 @@ class Hamiltonian:
         z_terms = self.couplings["z"]
         j_terms = self.couplings["J"]
 
+        if self.correction == True:
+            corr_term = self.lambda_factor*self.n_spins/4.0
+        else:
+            corr_term = 0
+
         #Transverse field but not in first spin
         for i in range(1, self.n_spins):
             Ham += -l_terms[i-1] * self.sx_list[i]
 
         #Virtual qubit down at end of chain
-        Ham+= j_terms[-1]*self.sz_list[self.n_spins-1]
+        Ham+= (j_terms[-1] - corr_term)*self.sz_list[self.n_spins-1]
 
         #Interaction terms with the rest of the spins except for the last one
         for i in range(0, self.n_spins-1):
-            Ham += j_terms[i]*self.sz_list[i]*self.sz_list[i+1]
+            Ham += (j_terms[i] - corr_term)*self.sz_list[i]*self.sz_list[i+1]
         
         #Residual z fields
         for i in range(0,self.n_spins):

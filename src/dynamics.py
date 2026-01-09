@@ -161,7 +161,7 @@ def calculate_corrections(simulation, Hamiltonian, ti, target, Nstep):
     tf = np.pi/Hamiltonian.J
     #iterate for each state, and evolve under correction hamiltonian (ZZ)
     for state in simulation:
-       corrected_result = time_evolution (Hamiltonian, state, ti, tf, Nstep)
+       corrected_result = time_evolution(Hamiltonian, state, ti, tf, Nstep)
        #calculate fidelities and maximums
        corrected_fidelity = calculate_full_fidelity_standard(corrected_result, target)
        corrected_fidelities.append(max(corrected_fidelity))
